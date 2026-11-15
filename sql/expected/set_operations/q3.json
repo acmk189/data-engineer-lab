@@ -1,0 +1,21 @@
+{
+ "columns": ["diff_type", "order_id"],
+ "ordered": true,
+ "rows": [
+  ["mismatch", "288.00"],
+  ["mismatch", "418.00"],
+  ["mismatch", "684.00"],
+  ["mismatch", "2334.00"],
+  ["mismatch", "3058.00"],
+  ["mismatch", "3135.00"],
+  ["mismatch", "5634.00"],
+  ["only_in_source", "2003.00"],
+  ["only_in_source", "3796.00"],
+  ["only_in_source", "4544.00"],
+  ["only_in_source", "5185.00"],
+  ["only_in_source", "5733.00"],
+  ["only_in_target", "6083.00"],
+  ["only_in_target", "6084.00"],
+  ["only_in_target", "6085.00"]
+ ]
+}
