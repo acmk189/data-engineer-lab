@@ -1,7 +1,0 @@
-{
- "columns": ["both_count", "software_only", "service_only"],
- "ordered": false,
- "rows": [
-  ["454.00", "117.00", "68.00"]
- ]
-}
