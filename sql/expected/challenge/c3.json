@@ -1,0 +1,11 @@
+{
+ "columns": ["category", "item_count", "discounted_count", "discounted_pct"],
+ "ordered": true,
+ "rows": [
+  ["book", "2340.00", "445.00", "19.00"],
+  ["hardware", "1605.00", "322.00", "20.10"],
+  ["service", "1432.00", "295.00", "20.60"],
+  ["software", "1791.00", "357.00", "19.90"],
+  ["supply", "5683.00", "1147.00", "20.20"]
+ ]
+}

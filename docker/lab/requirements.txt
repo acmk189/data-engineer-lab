@@ -1,0 +1,6 @@
+# 動作確認した組み合わせに固定してある。上げるときは spark/ のノートブックを一通り実行して確かめる。
+pyspark==4.1.4
+jupyterlab==4.6.6
+pandas==3.1.1
+pyarrow==26.0.1
+pymysql[rsa]==1.2.4

@@ -1,0 +1,9 @@
+{
+ "columns": ["segment", "order_count", "avg_amount", "median_amount"],
+ "ordered": true,
+ "rows": [
+  ["enterprise", "1076.00", "65377.86", "34965.00"],
+  ["individual", "3283.00", "68335.50", "36040.00"],
+  ["smb", "1000.00", "67443.46", "35340.00"]
+ ]
+}
