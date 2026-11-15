@@ -1,1 +1,21 @@
-./data
+# 大きいデータは `make data` で生成する（data/seed/ はコミットする）
+data/large/
+
+# Spark が作るもの
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+Untitled*.ipynb
+
+# 手元の設定（LAB_DRIVER_MEMORY など）
+.env
+
+# macOS
+.DS_Store
