@@ -1,5 +1,6 @@
 # 大きいデータは `make data` で生成する（data/seed/ はコミットする）
 data/large/
+data/tmp/
 
 # Spark が作るもの
 spark-warehouse/
