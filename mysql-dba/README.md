@@ -28,7 +28,7 @@ MySQL の中の仕組みを、解説と Docker の実験で学ぶ学習トラッ
 | 第1部 全体像 | [00 準備](chapters/00_setup.md) | 環境の構成、セッションの開き方 | できた |
 | | [01 全体像](chapters/01_overview.md) | 1回の UPDATE が通る道 | できた |
 | | [02 パラメータの仕組み](chapters/02_parameters.md) | グローバルとセッション、値の出どころ、パラメータグループ | できた |
-| | 03 観察の道具 | performance_schema、sys、INNODB STATUS、スロークエリログ | これから |
+| | [03 観察の道具](chapters/03_observability.md) | performance_schema、sys、INNODB STATUS、スロークエリログ | できた |
 | 第2部 InnoDB | 10 データの置き方 | ページ、B+tree、クラスタインデックス、主キーの選び方 | これから |
 | | 11 バッファプール | キャッシュの仕組み、大きいスキャンに強い理由 | これから |
 | | 12 redo ログとクラッシュリカバリ | コミットはいつディスクに書かれるか | これから |
