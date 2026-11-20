@@ -1,0 +1,13 @@
+# 全サーバーに共通の設定。サーバーごとの設定は src.cnf などにある。
+# どちらもコンテナの /etc/mysql/conf.d/ に置かれて、起動時に読まれる。
+[mysqld]
+skip_name_resolve = ON
+# 初回起動時に CSV を読み込む（LOAD DATA LOCAL INFILE）ため
+local_infile = ON
+# 起動や復旧の様子を、エラーログ（docker compose logs）で詳しく見るため
+log_error_verbosity = 3
+gtid_mode = ON
+enforce_gtid_consistency = ON
+# バッファプールを 16MB 単位で変えられるようにする（11章で 32MB まで縮める）
+innodb_buffer_pool_chunk_size = 16M
+innodb_buffer_pool_size = 128M

@@ -1,0 +1,5 @@
+# レプリカの設定
+[mysqld]
+server_id = 2
+log_bin = binlog
+relay_log = relay-bin

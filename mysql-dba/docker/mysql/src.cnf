@@ -1,0 +1,4 @@
+# ソースの設定
+[mysqld]
+server_id = 1
+log_bin = binlog

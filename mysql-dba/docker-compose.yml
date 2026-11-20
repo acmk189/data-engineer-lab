@@ -1,0 +1,63 @@
+# MySQL DBA 学習トラックの実験環境。ルートの docker-compose.yml とは別のプロジェクトとして動く。
+# 使い方は README.md と `make` の一覧を見る。
+name: mysql-dba
+
+x-healthcheck: &healthcheck
+  test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+  interval: 2s
+  timeout: 3s
+  retries: 90
+
+services:
+  # ソース。binlog ON、GTID ON。初回起動時に、ルートのスキーマとシード（data/seed/）を読み込む
+  src:
+    image: mysql:8.4.13
+    ports:
+      - "127.0.0.1:${MYSQL_DBA_SRC_PORT:-3311}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: lab
+      MYSQL_INITDB_SKIP_TZINFO: "1"
+      TZ: Asia/Tokyo
+    volumes:
+      - src-data:/var/lib/mysql
+      - ./docker/mysql/common.cnf:/etc/mysql/conf.d/00-common.cnf:ro
+      - ./docker/mysql/src.cnf:/etc/mysql/conf.d/10-server.cnf:ro
+      - ../docker/mysql/init/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../docker/mysql/init/02_load.sh:/docker-entrypoint-initdb.d/02_load.sh:ro
+      - ./docker/init/10_users.sql:/docker-entrypoint-initdb.d/10_users.sql:ro
+      - ../data/seed:/opt/lab/seed:ro
+    healthcheck: *healthcheck
+
+  # レプリカ。空から始めて、src の binlog を全部流し込む（初期データは自分では読み込まない）
+  rep:
+    image: mysql:8.4.13
+    ports:
+      - "127.0.0.1:${MYSQL_DBA_REP_PORT:-3312}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_INITDB_SKIP_TZINFO: "1"
+      TZ: Asia/Tokyo
+    volumes:
+      - rep-data:/var/lib/mysql
+      - ./docker/mysql/common.cnf:/etc/mysql/conf.d/00-common.cnf:ro
+      - ./docker/mysql/rep.cnf:/etc/mysql/conf.d/10-server.cnf:ro
+      - ./docker/init/90_replica.sql:/docker-entrypoint-initdb.d/90_replica.sql:ro
+    healthcheck: *healthcheck
+
+  # 道具のコンテナ（mysql、mysqlbinlog、mysqlslap、sysbench、python）。全部のサーバーにここから繋ぐ。
+  # src と rep のデータディレクトリを読み取り専用で見られる（binlog や redo のファイルを直接見るため）
+  tools:
+    build: ./docker/tools
+    image: mysql-dba-tools:local
+    volumes:
+      - .:/lab
+      - src-data:/var/lib/mysql-src:ro
+      - rep-data:/var/lib/mysql-rep:ro
+    environment:
+      PYTHONPATH: /lab/labs/common
+      TZ: Asia/Tokyo
+
+volumes:
+  src-data:
+  rep-data:
