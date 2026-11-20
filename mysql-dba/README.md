@@ -34,7 +34,7 @@ MySQL の中の仕組みを、解説と Docker の実験で学ぶ学習トラッ
 | | [12 redo ログとクラッシュリカバリ](chapters/12_redo.md) | コミットはいつディスクに書かれるか | できた |
 | | [13 undo と MVCC](chapters/13_undo_mvcc.md) | 古い版の読み取り、purge、履歴リスト | できた |
 | | [14 ロック](chapters/14_locks.md) | 行ロック、ギャップロック、デッドロック | できた |
-| | 15 メタデータロックと Online DDL | ALTER が全体を止める仕組み | これから |
+| | [15 メタデータロックと Online DDL](chapters/15_mdl_online_ddl.md) | ALTER が全体を止める仕組み | できた |
 | 第3部 binlog | 20 binlog とは | redo との違い、ファイル、保持期間 | これから |
 | | 21 binlog の中身を読む | 形式、イベント、row image、GTID | これから |
 | | 22 コミットの裏側 | redo と binlog をそろえる仕組み、グループコミット | これから |
