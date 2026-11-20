@@ -14,6 +14,21 @@ expect_eq "$(sql rep 'SELECT SERVICE_STATE FROM performance_schema.replication_a
 expect_eq "$(sql rep 'SELECT @@super_read_only')" 1 "rep は super_read_only"
 expect_eq "$(sql src 'SELECT @@gtid_mode')" ON "GTID が ON"
 
+# 00章の実験1: 2つのサーバーは番号で見分ける。レプリカは root でも書き込めない
+expect_eq "$(sql src 'SELECT @@server_id')" 1 "src の server_id は 1"
+expect_eq "$(sql rep 'SELECT @@server_id')" 2 "rep の server_id は 2"
+expect_ne "$(sql src 'SELECT @@server_uuid')" "$(sql rep 'SELECT @@server_uuid')" "server_uuid はサーバーごとに違う"
+expect_eq "$(sql_err rep 'CREATE DATABASE dba00_should_fail')" 1290 "rep は root でも書き込めない（ERROR 1290）"
+
+# 00章の実験2: SHOW PROCESSLIST で、ほかのセッションやレプリカの接続も見える
+tools bash -c 'MYSQL_PWD=root mysql -h src -uroot -e "SELECT SLEEP(4)"' >/dev/null 2>&1 &
+sleep 1
+pl=$(sql src 'SHOW PROCESSLIST' | cut -f2,5)
+expect_ge "$(grep -c '^root' <<<"$pl")" 2 "別のセッションの接続も見える"
+expect_match "$pl" $'^repl\tBinlog Dump GTID$' "レプリカの接続（Binlog Dump GTID）が見える"
+expect_match "$pl" $'^event_scheduler\tDaemon$' "MySQL 自身の裏方（event_scheduler）も見える"
+wait
+
 # 道具コンテナ
 expect_match "$(tools mysqlbinlog --version)" '8\.4\.' "mysqlbinlog は 8.4 系"
 expect_match "$(tools mysqlslap --version)" '8\.4\.' "mysqlslap は 8.4 系"
