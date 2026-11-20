@@ -14,7 +14,7 @@ Spark の実行の仕組み、少し難しい SQL、RDBMS と DWH の違い、�
 | [`sql/`](sql/README.md)                     | 少し難しい SQL の問題集（自己結合、集合演算、粒度、難問）。自動で答え合わせできる   | W2 ぶん作成済み |
 | [`databricks/`](databricks/README.md)       | Databricks で試すもの（Delta Lake の OPTIMIZE / Z-ORDER / Liquid Clustering）       | W2 ぶん作成済み |
 | [`rdbms/`](rdbms/README.md)                 | MySQL の実行計画とチューニング                                                      | これから        |
-| [`mysql-dba/`](mysql-dba/README.md) | MySQL の中の仕組み（InnoDB、binlog、レプリケーション、CDC）を、解説と Docker の実験で学ぶ。今の学習計画とは別に進める | 第1部まで作成済み |
+| [`mysql-dba/`](mysql-dba/README.md) | MySQL の中の仕組み（InnoDB、binlog、レプリケーション、CDC）を、解説と Docker の実験で学ぶ。今の学習計画とは別に進める | 第2部まで作成済み |
 | [`modeling/`](modeling/README.md)           | ディメンショナルモデリング                                                          | これから        |
 | [`docs/reading/`](docs/reading/README.md)   | 読書メモ                                                                            | 随時            |
 | [`data/`](data/README.md)                   | 共通のデータセットと生成スクリプト                                                  | —               |
