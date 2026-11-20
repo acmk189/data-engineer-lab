@@ -112,17 +112,28 @@ FROM mysql.innodb_table_stats
 WHERE database_name = 'lab';
 ```
 
-ここを見る: `clustered_index_size`（主キーの木のページの数）と `sum_of_other_index_sizes`（セカンダリインデックスのページの数）。
+データが入っている葉のページの数も見る。
+
+```sql
+SELECT table_name, stat_name, stat_value
+FROM mysql.innodb_index_stats
+WHERE database_name = 'lab' AND table_name IN ('orders', 'order_items')
+  AND index_name = 'PRIMARY' AND stat_name IN ('size', 'n_leaf_pages');
+```
+
+ここを見る: `clustered_index_size`（主キーの木に割り当てたページの数）と `sum_of_other_index_sizes`（セカンダリインデックスのページの数）。`n_leaf_pages`（データが入っている葉のページの数）との違い。
 
 <details>
 <summary>何が起きたか</summary>
 
-| テーブル | 行の数 | 主キーの木のページ | セカンダリインデックスのページ |
-|---|---|---|---|
-| `orders` | 6,082 | 20 | 0 |
-| `order_items` | 14,570 | 97 | 0 |
+| テーブル | 行の数 | 割り当てたページ（`size`） | 葉のページ（`n_leaf_pages`） | セカンダリインデックスのページ |
+|---|---|---|---|---|
+| `orders` | 6,082 | 20 | 19 | 0 |
+| `order_items` | 14,570 | 97 | 38 | 0 |
 
-`orders` は1ページに約300行入っている。1行が50バイトくらいの小さいテーブルなので、16KB に多く入る。セカンダリインデックスのページが 0 なのは、この環境のテーブルに主キー以外のインデックスを張っていないため。
+葉のページで割ると、`orders` は1ページに約320行、`order_items` は約380行入っている。1行が数十バイトの小さいテーブルなので、16KB に多く入る。セカンダリインデックスのページが 0 なのは、この環境のテーブルに主キー以外のインデックスを張っていないため。
+
+`order_items` で、割り当てたページ（97）が葉のページ（38）よりずっと多いのは、InnoDB が場所を確保する単位のため。小さいうちは1ページずつ確保するけれど、ある程度大きくなると64ページ（1MB）ずつまとめて確保する。まだ使っていないページも「割り当てたページ」に数えられる。データが実際に入っているページの数を知りたいときは `n_leaf_pages` を見る（11章で、`order_items` を全部読むとバッファプールに載るのが39ページ = 葉38 + 根1 になることを確かめる）。
 
 `mysql.innodb_table_stats` の数字は、`ANALYZE TABLE` をしたときに数えた統計で、ふだんはオプティマイザが実行計画を決めるのに使っている。
 
