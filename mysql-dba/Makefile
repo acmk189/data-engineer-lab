@@ -6,7 +6,7 @@ DC := docker compose
 ALL := --profile nobin --profile bg --profile cdc
 MYSQL := $(DC) exec -e MYSQL_PWD=root tools mysql -uroot
 
-.PHONY: help up down reset ps logs state a b c rep sh verify
+.PHONY: help up down reset ps logs state a b c rep sh verify lint
 
 help:  ## この一覧を表示する
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-12s %s\n", $$1, $$2}'
@@ -51,3 +51,6 @@ sh:  ## 道具コンテナのシェルに入る（mysqlbinlog、sysbench、pytho
 
 verify:  ## 確認スクリプトを流す（実験が解説どおりに動くか）。例: make verify / make verify ch=12
 	bash verify/run.sh $(ch)
+
+lint:  ## 章のファイルの形を確かめる（見出しの順番、です・ます、リンク切れ、make のターゲットなど）
+	$(DC) exec -T tools python /repo/mysql-dba/verify/lint_chapters.py

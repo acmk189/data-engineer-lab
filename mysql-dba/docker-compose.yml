@@ -46,12 +46,14 @@ services:
     healthcheck: *healthcheck
 
   # 道具のコンテナ（mysql、mysqlbinlog、mysqlslap、sysbench、python）。全部のサーバーにここから繋ぐ。
-  # src と rep のデータディレクトリを読み取り専用で見られる（binlog や redo のファイルを直接見るため）
+  # src と rep のデータディレクトリを読み取り専用で見られる（binlog や redo のファイルを直接見るため）。
+  # リポジトリ全体も読み取り専用で /repo に見せる（make lint が、mysql-dba/ の外へのリンクを確かめるため）
   tools:
     build: ./docker/tools
     image: mysql-dba-tools:local
     volumes:
       - .:/lab
+      - ..:/repo:ro
       - src-data:/var/lib/mysql-src:ro
       - rep-data:/var/lib/mysql-rep:ro
     environment:
