@@ -31,7 +31,7 @@ MySQL の中の仕組みを、解説と Docker の実験で学ぶ学習トラッ
 | | [03 観察の道具](chapters/03_observability.md) | performance_schema、sys、INNODB STATUS、スロークエリログ | できた |
 | 第2部 InnoDB | [10 データの置き方](chapters/10_storage.md) | ページ、B+tree、クラスタインデックス、主キーの選び方 | できた |
 | | [11 バッファプール](chapters/11_buffer_pool.md) | キャッシュの仕組み、大きいスキャンに強い理由 | できた |
-| | 12 redo ログとクラッシュリカバリ | コミットはいつディスクに書かれるか | これから |
+| | [12 redo ログとクラッシュリカバリ](chapters/12_redo.md) | コミットはいつディスクに書かれるか | できた |
 | | 13 undo と MVCC | 古い版の読み取り、purge、履歴リスト | これから |
 | | 14 ロック | 行ロック、ギャップロック、デッドロック | これから |
 | | 15 メタデータロックと Online DDL | ALTER が全体を止める仕組み | これから |

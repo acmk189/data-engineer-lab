@@ -149,6 +149,21 @@ ensure_big() {
   [ "$(sql src "SELECT COUNT(*) FROM lab_big.orders_big" 2>/dev/null)" -ge 1000000 ] 2>/dev/null || _ng "lab_big.orders_big を作れなかった"
 }
 
+# acked_inserts.py を流しながら、SECONDS 秒後に src を kill -9 して起動し直す。
+# 「コミット済みと返事をもらった最後の番号」（acked=）と、再起動した後に残っていた件数（stored=）を出す
+crash_during_inserts() {
+  local table=$1 secs=$2 out="$_TMP/acked.$RANDOM" pid acked
+  py labs/common/acked_inserts.py --host src --table "$table" --seconds 120 > "$out" 2>&1 &
+  pid=$!
+  sleep "$secs"
+  dc kill -s KILL src >/dev/null 2>&1
+  wait "$pid"
+  dc up -d --wait src >/dev/null 2>&1
+  acked=$(grep -E '^acked=' "$out" | tail -1 | cut -d= -f2)
+  echo "acked=${acked:-0}"
+  echo "stored=$(sql src "SELECT COUNT(*) FROM $table")"
+}
+
 # --- 状態 ---------------------------------------------------------------------
 
 # 環境が make up の直後と同じ状態（bin/state.sh が成功する状態）に戻っていることを確かめる
