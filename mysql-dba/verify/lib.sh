@@ -139,6 +139,16 @@ skip_failed_gtid() {
   sql "$host" "STOP REPLICA; SET GLOBAL super_read_only=OFF; SET GTID_NEXT='$g'; BEGIN; COMMIT; SET GTID_NEXT='AUTOMATIC'; SET GLOBAL super_read_only=ON; START REPLICA"
 }
 
+# --- 実験用のデータ -------------------------------------------------------------
+
+# lab_big.orders_big（make big で作る大きいテーブル）がなければ作る
+ensure_big() {
+  if [ "$(sql src "SELECT COUNT(*) FROM lab_big.orders_big" 2>/dev/null)" -lt 1000000 ] 2>/dev/null; then
+    make -s big >/dev/null
+  fi
+  [ "$(sql src "SELECT COUNT(*) FROM lab_big.orders_big" 2>/dev/null)" -ge 1000000 ] 2>/dev/null || _ng "lab_big.orders_big を作れなかった"
+}
+
 # --- 状態 ---------------------------------------------------------------------
 
 # 環境が make up の直後と同じ状態（bin/state.sh が成功する状態）に戻っていることを確かめる

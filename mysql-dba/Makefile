@@ -6,7 +6,7 @@ DC := docker compose
 ALL := --profile nobin --profile bg --profile cdc
 MYSQL := $(DC) exec -e MYSQL_PWD=root tools mysql -uroot
 
-.PHONY: help up down reset ps logs state a b c rep sh verify lint
+.PHONY: help up down reset ps logs state a b c rep sh verify lint big
 
 help:  ## この一覧を表示する
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-12s %s\n", $$1, $$2}'
@@ -54,3 +54,6 @@ verify:  ## 確認スクリプトを流す（実験が解説どおりに動く�
 
 lint:  ## 章のファイルの形を確かめる（見出しの順番、です・ます、リンク切れ、make のターゲットなど）
 	$(DC) exec -T tools python /repo/mysql-dba/verify/lint_chapters.py
+
+big:  ## 大きいテーブル lab_big.orders_big（約120万行）を作って、レプリカが追いつくまで待つ（10章、11章など）
+	$(DC) exec -T -e MYSQL_PWD=root tools bash -c 'mysql -h src -uroot --table < /lab/labs/common/big_table.sql && bash /lab/bin/wait-replica.sh 900'
