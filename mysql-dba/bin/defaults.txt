@@ -12,6 +12,7 @@ binlog_group_commit_sync_delay=0
 long_query_time=10.000000
 slow_query_log=0
 innodb_old_blocks_time=1000
+innodb_lru_scan_depth=1024
 transaction_isolation=REPEATABLE-READ
 innodb_lock_wait_timeout=50
 sql_require_primary_key=0
