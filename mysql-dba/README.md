@@ -39,7 +39,7 @@ MySQL の中の仕組みを、解説と Docker の実験で学ぶ学習トラッ
 | | [21 binlog の中身を読む](chapters/21_binlog_events.md) | 形式、イベント、row image、GTID | できた |
 | | [22 コミットの裏側](chapters/22_commit.md) | redo と binlog をそろえる仕組み、グループコミット | できた |
 | 第4部 レプリケーション | [30 レプリケーションの仕組み](chapters/30_replication.md) | スレッド、relay log、遅延、並列での反映 | できた |
-| | 31 止まる・ずれるとき | よくあるエラーと直し方、作り直し | これから |
+| | [31 止まる・ずれるとき](chapters/31_replication_trouble.md) | よくあるエラーと直し方、作り直し | できた |
 | | 32 バージョンをまたぐ | 8.0 → 8.4、Blue/Green の中身 | これから |
 | 第5部 CDC | 40 CDC の仕組み | レプリカのふりをして binlog を受け取る | これから |
 | | 41 小さな CDC を自分で作る | どこまで読んだか、前と後の値、スキーマの変更 | これから |
