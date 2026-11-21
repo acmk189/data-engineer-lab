@@ -28,6 +28,17 @@ ap=$(q rep 'SELECT SERVICE_STATE FROM performance_schema.replication_applier_sta
 v=$(q rep 'SELECT @@GLOBAL.super_read_only'); [ "$v" = 1 ] || say "rep super_read_only=$v（既定 1）"
 v=$(q rep 'SELECT @@GLOBAL.replica_parallel_workers'); [ "$v" = 4 ] || say "rep replica_parallel_workers=$v（既定 4）"
 
+# rep で直接書いたトランザクション（src にない GTID）。レプリカで書くと、src と中身がずれる（31章）
+g=$(q src 'SELECT @@GLOBAL.gtid_executed' | tr -d '\n')
+errant=$(q rep "SELECT GTID_SUBTRACT(@@GLOBAL.gtid_executed, '$g')" | tr -d '\n')
+[ -z "$errant" ] || say "rep に、src にないトランザクションがある: $errant（レプリカで直接書いたもの。31章）"
+
+# 準同期のプラグイン（30章）。INSTALL PLUGIN は再起動しても残るので、入れたままにしない
+for h in src rep; do
+  p=$(q "$h" "SELECT IFNULL(GROUP_CONCAT(PLUGIN_NAME), '') FROM information_schema.PLUGINS WHERE PLUGIN_NAME LIKE 'rpl_semi_sync%'")
+  [ -z "$p" ] || say "$h に準同期のプラグインが残っている: $p（UNINSTALL PLUGIN で外す）"
+done
+
 if [ "$found" = 0 ]; then
   echo "ずれなし"
 else

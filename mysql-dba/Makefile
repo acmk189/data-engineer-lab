@@ -6,7 +6,7 @@ DC := docker compose
 ALL := --profile nobin --profile bg --profile cdc
 MYSQL := $(DC) exec -e MYSQL_PWD=root tools mysql -uroot
 
-.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash binlog nobin-up nobin-down
+.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash binlog nobin-up nobin-down load
 
 help:  ## この一覧を表示する
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-12s %s\n", $$1, $$2}'
@@ -72,3 +72,6 @@ nobin-up:  ## binlog を OFF にしたサーバー（nobin）を立てる（20�
 
 nobin-down:  ## nobin を止めて消す（データのボリュームは残る）
 	$(DC) --profile nobin rm -sf nobin
+
+load:  ## sysbench で src の sbtest に書き込みの負荷をかける（30章）。例: make load t=8 s=30（接続の数と秒数）
+	$(DC) exec -T tools bash /lab/bin/load.sh "$(or $(t),8)" "$(or $(s),30)"

@@ -65,7 +65,8 @@ tools bash /lab/bin/setup-replication.sh >/dev/null
 expect_eq "$(sql rep 'SELECT SERVICE_STATE FROM performance_schema.replication_applier_status')" ON "止まっているだけなら再開する"
 sql src "DROP DATABASE IF EXISTS dba00; CREATE DATABASE dba00; CREATE TABLE dba00.t (id INT PRIMARY KEY)"
 wait_caught_up
-sql rep "SET GLOBAL super_read_only=OFF; INSERT INTO dba00.t VALUES (1); SET GLOBAL super_read_only=ON"
+# rep で直接書く。sql_log_bin=0 にして rep の binlog に書かないので、rep だけの GTID（31章）は残らない
+sql rep "SET GLOBAL super_read_only=OFF; SET SESSION sql_log_bin=0; INSERT INTO dba00.t VALUES (1); SET SESSION sql_log_bin=1; SET GLOBAL super_read_only=ON"
 sql src "INSERT INTO dba00.t VALUES (1)"
 wait_for 30 sql_is rep 'SELECT MAX(LAST_ERROR_NUMBER) FROM performance_schema.replication_applier_status_by_worker' 1062
 out=$(tools bash /lab/bin/setup-replication.sh 2>&1); rc=$?
