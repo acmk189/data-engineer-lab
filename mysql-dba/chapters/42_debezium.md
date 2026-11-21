@@ -235,6 +235,8 @@ make state
 - **AWS DMS**: 移し方の種類に、全部を移す（full-load）、変更だけを写す（cdc）、全部を移してから変更を写し続ける（full-load-and-cdc）がある。CDC には `REPLICATION CLIENT` と `REPLICATION SLAVE` の権限、ROW と FULL が要る。どこまで読んだかは、タスクの CDC のリカバリーのチェックポイントとして残って、そこから再開できる。全部を移している途中でソースが止まると、タスクはエラーにならずに終わるのに、ターゲットがずれていることがある（AWS のドキュメントの注意）
 - **ゼロ ETL 統合**: 送り先は Amazon Redshift か Amazon SageMaker Lakehouse。最初に全部を読み込んだ後、Aurora に書かれてから数秒のうちに写し続ける。Aurora MySQL では、拡張バイナリログと、行の形の設定（ROW、FULL、`binlog_row_metadata=FULL`）が要る（[40章](40_cdc_mechanics.md)）
 
+- **8.4 互換版**: 同じ。AWS は、8.4 互換版は最新の v3 と同じ Aurora の機能を持つ、としている（違うのは例外の一覧にあるものだけ。[00章](00_setup.md)）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場なら、ライターで次の軽い読み取りを流してみる。

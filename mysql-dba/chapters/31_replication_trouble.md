@@ -282,6 +282,8 @@ DROP DATABASE IF EXISTS dba31;
 - **クラスターの中のリーダーには、この章のエラーは起きない**: リーダーは binlog を使わず、ライターと同じストレージを読んでいる（[30章](30_replication.md)）
 - **Blue/Green のグリーン側は、最初から書き込めない**: Aurora MySQL 3 では、作ったグリーン側のクラスターは書き込みを受け付けない（`read_only`）。AWS は、テストの間も読み取り専用にしておくよう勧めている。書き込むと、ブルーから流れてくる変更とぶつかって（この章の 1062 や 1032）、切り替えた後の本番にも意図しないデータが残るため。ただし、`CONNECTION_ADMIN` の権限を持つユーザー（マスターユーザーを含む）は、`read_only` でも書けてしまう（[30章](30_replication.md)の `read_only` と `super_read_only` の違い）
 
+- **8.4 互換版**: Aurora の仕組みと、`mysql.rds_skip_repl_error` などの手続きの使い方は同じ（[00章](00_setup.md)）。ただし MySQL 8.4 では、古い名前の文（`SHOW SLAVE STATUS` など）は構文のエラー（1064）になる（[32章](32_upgrade.md)）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場で、binlog のレプリカになっているクラスターがあるなら、そのライターで次の軽い読み取りを流してみる。

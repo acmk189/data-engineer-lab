@@ -271,6 +271,8 @@ DROP DATABASE dba15;
 - **Aurora 独自の高速 DDL**: Aurora MySQL v2 には、「ラボモード」で使える独自の高速 DDL があった。v3 ではラボモードがなくなって、MySQL 8.0 の INSTANT DDL に置き換わっている。古い記事で「Aurora の高速 DDL」と書いてあったら、v2 の話だと思って読む
 - **binlog のレプリカ**: Blue/Green デプロイなど binlog のレプリケーションを使っているときは、DDL がグリーン側でも同じ時間かかって遅れる（[30章](30_replication.md)・[32章](32_upgrade.md)）
 
+- **8.4 互換版**: 同じ。AWS は、8.4 互換版は最新の v3 と同じ Aurora の機能を持つ、としている（違うのは例外の一覧にあるものだけ。[00章](00_setup.md)）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場なら、DDL を流す前の確認として、ライターで次の軽い読み取りを流してみる。

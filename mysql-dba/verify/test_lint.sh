@@ -35,5 +35,6 @@ check verify/fixtures/bad_aurora_headings.md 1 "Aurora の節"
 check verify/fixtures/bad_aurora_warning.md  1 "Aurora の節"
 check verify/fixtures/98_bad_title.md        1 "題名"
 check verify/fixtures/bad_measured_time.md   1 "測った時間"
+check verify/fixtures/bad_aurora_no_84.md    1 "Aurora の節"
 
 exit $fail

@@ -265,6 +265,8 @@ DROP DATABASE IF EXISTS dba41;
 
 `sql_require_primary_key` は MySQL 8.0.13 からある変数。Aurora で設定できるかは、使っているパラメータグループで確かめる。
 
+- **8.4 互換版**: 同じ。AWS は、8.4 互換版は最新の v3 と同じ Aurora の機能を持つ、としている（違うのは例外の一覧にあるものだけ。[00章](00_setup.md)）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場なら、ライターで次の軽い読み取りを流してみる。

@@ -243,6 +243,8 @@ class Checker:
             self.err(head_no, "Aurora の節", "AWS のドキュメント（https://docs.aws.amazon.com/）へのリンクを1つ以上入れる")
         if AURORA_WARNING not in outside:
             self.err(head_no, "Aurora の節", "「業務の Aurora で見た値はこのリポジトリに書かない」という注意書きを入れる")
+        if "8.4 互換版" not in outside:
+            self.err(head_no, "Aurora の節", "8.4 互換版で同じか違うかを書く（仕様 §5.5: v3 と 8.4 互換版で違うところは両方書く）")
 
 
 def default_paths():

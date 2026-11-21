@@ -231,6 +231,8 @@ DROP DATABASE IF EXISTS dba40;
   - 使っていないこと: `binlog_transaction_compression` が ON でない。`binlog_row_value_options` が `PARTIAL_JSON` でない
 - **拡張バイナリログのファイルは、バックアップやクローンに入らない**: 復元したクラスターやクローンでは、元のクラスターの binlog の続きは読めない（[20章](20_binlog_basics.md)）
 
+- **8.4 互換版**: 同じ。AWS は、8.4 互換版は最新の v3 と同じ Aurora の機能を持つ、としている（違うのは例外の一覧にあるものだけ。[00章](00_setup.md)）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場なら、ライターで次の軽い読み取りを流してみる。

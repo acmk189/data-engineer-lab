@@ -354,6 +354,8 @@ DROP DATABASE dba14;
 - **待機イベントの名前**: Database Insights では、行ロックの待ちは v3 では `synch/cond/innodb/row_lock_wait`、v2 では `synch/cond/innodb/row_lock_wait_cond` として出る。AWS のドキュメントには、`data_lock_waits` と `data_locks` をつないで、原因の接続を探すクエリも載っている
 - **デッドロックの記録**: `innodb_print_all_deadlocks` をパラメータグループで ON にすると、エラーログに残る（エラーログは CloudWatch Logs に送れる）
 
+- **8.4 互換版**: 同じ。AWS は、8.4 互換版は最新の v3 と同じ Aurora の機能を持つ、としている（違うのは例外の一覧にあるものだけ。[00章](00_setup.md)）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場なら、ライターで次の軽い読み取りを流してみる。待ちがなければ、1つ目は何も返さない。

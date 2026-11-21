@@ -291,6 +291,8 @@ SET GLOBAL Questions = 0;
 | `SET PERSIST` で残す | パラメータグループを変える |
 | コンパイル時の既定値 | エンジンの既定値（式で決まるものもある） |
 
+- **8.4 互換版**: パラメータグループの仕組みは同じ（[00章](00_setup.md)）。マスターユーザーに付く権限には、v3 と変わったところがある（出典の、v3 と 8.4 互換版を比べたページ）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場なら、次の軽い読み取りを流して、パラメータグループの値と見比べる。
@@ -312,6 +314,7 @@ WHERE VARIABLE_NAME IN ('innodb_buffer_pool_size', 'max_connections', 'long_quer
 - [DB cluster parameter groups for Amazon Aurora DB clusters（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_WorkingWithDBClusterParamGroups.html)
 - [Aurora MySQL configuration parameters（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Reference.ParameterGroups.html)
 - [Master user account privileges（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.MasterAccounts.html)
+- [Comparing Aurora MySQL version 3 and Aurora MySQL version 8.4（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Compare-v3-v84.html)
 
 ## 説明できるか確かめる
 

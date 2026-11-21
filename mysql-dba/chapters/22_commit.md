@@ -248,6 +248,8 @@ SET GLOBAL sync_binlog = 1;
 - **拡張バイナリログ（enhanced binlog）**: binlog とトランザクションのログを、ストレージに並べて書く。binlog を ON にしたときのコミットの負担が小さくなり、再起動のときの binlog の復旧も速くなる。使うときの設定は `aurora_enhanced_binlog=1`、`binlog_backup=0`、`binlog_replication_globaldb=0`（[20章](20_binlog_basics.md)）。制限の一覧には、`binlog_group_commit_sync_delay` と `binlog_group_commit_sync_no_delay_count` が入っている
 - **再起動に時間がかかる**: binlog を ON にすると、予期しない再起動の後に、この章の XA の復旧（binlog の復旧）が要る（[20章](20_binlog_basics.md)）
 
+- **8.4 互換版**: 同じ。AWS は、8.4 互換版は最新の v3 と同じ Aurora の機能を持つ、としている（違うのは例外の一覧にあるものだけ。[00章](00_setup.md)）
+
 ### 業務の Aurora で見てみるなら
 
 業務の Aurora を触れる立場なら、ライターで次の軽い読み取りを流してみる。

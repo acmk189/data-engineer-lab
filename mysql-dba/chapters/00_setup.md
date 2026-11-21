@@ -209,12 +209,15 @@ SELECT @@version, AURORA_VERSION();
 
 `@@version` が `8.0.` で始まれば v3（8.0 互換）、`8.4.` で始まれば 8.4 互換版。以降の章の「違うところ」は、これに合わせて読む。
 
+AWS は、8.4 互換版は最新の v3 と同じ Aurora の機能を持ち、違うのは一覧にある例外だけ、としている（出典の2つ目と3つ目）。例外は、MySQL 8.4 そのものの変更（[32章](32_upgrade.md)）と、TLS の既定値やマスターユーザーの権限のような細かい点。各章の Aurora の節は v3 のドキュメントで確かめていて、節の終わりに、8.4 互換版で同じか違うかを1行で書いた。
+
 業務の Aurora で見た値はこのリポジトリに書かない（`notes/` も含めて。このリポジトリは公開している）。
 
 出典:
 
 - [Checking Aurora MySQL version numbers（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Updates.Versions.html)
 - [Aurora MySQL version 8.4 compatible with MySQL 8.4（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.MySQL84.html)
+- [Comparing Aurora MySQL version 3 and Aurora MySQL version 8.4（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Compare-v3-v84.html)
 
 ## 説明できるか確かめる
 
