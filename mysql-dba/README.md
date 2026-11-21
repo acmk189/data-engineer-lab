@@ -105,6 +105,7 @@ make lint       # 章のファイルの形を確かめる
 
 ## 動作確認した環境
 
-- MySQL 8.4.13（公式イメージ）
+- MySQL 8.4.13 と 8.0.46（公式イメージ。8.0.46 は32章の Blue/Green だけで使う）
 - 道具コンテナ: Ubuntu 26.04（MySQL のクライアント 8.4.13、sysbench 1.0.20、Python 3.14、pymysql 1.2.4、mysql-replication 1.0.17）
-- 章の実験は、`make verify` で解説どおりに動くことを確かめてから載せている。章ができるたびに、ここも更新する
+- 42章: Kafka 4.1.1（公式イメージ、KRaft）、Debezium の MySQL コネクタ 3.7.1.Final
+- 2026-11-21 に、`make reset` のあと `make verify` を2回続けて流して、全章の確認が2回とも通ることを確かめた（bg と cdc のプロファイルを使う章も含む）
