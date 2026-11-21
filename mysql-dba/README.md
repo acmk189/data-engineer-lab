@@ -36,7 +36,7 @@ MySQL の中の仕組みを、解説と Docker の実験で学ぶ学習トラッ
 | | [14 ロック](chapters/14_locks.md) | 行ロック、ギャップロック、デッドロック | できた |
 | | [15 メタデータロックと Online DDL](chapters/15_mdl_online_ddl.md) | ALTER が全体を止める仕組み | できた |
 | 第3部 binlog | [20 binlog とは](chapters/20_binlog_basics.md) | redo との違い、ファイル、保持期間 | できた |
-| | 21 binlog の中身を読む | 形式、イベント、row image、GTID | これから |
+| | [21 binlog の中身を読む](chapters/21_binlog_events.md) | 形式、イベント、row image、GTID | できた |
 | | 22 コミットの裏側 | redo と binlog をそろえる仕組み、グループコミット | これから |
 | 第4部 レプリケーション | 30 レプリケーションの仕組み | スレッド、relay log、遅延、並列での反映 | これから |
 | | 31 止まる・ずれるとき | よくあるエラーと直し方、作り直し | これから |
