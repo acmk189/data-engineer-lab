@@ -43,7 +43,7 @@ MySQL の中の仕組みを、解説と Docker の実験で学ぶ学習トラッ
 | | [32 バージョンをまたぐ](chapters/32_upgrade.md) | 8.0 → 8.4、Blue/Green の中身 | できた |
 | 第5部 CDC | [40 CDC の仕組み](chapters/40_cdc_mechanics.md) | レプリカのふりをして binlog を受け取る | できた |
 | | [41 小さな CDC を自分で作る](chapters/41_mini_cdc.md) | どこまで読んだか、前と後の値、スキーマの変更 | できた |
-| | 42 Debezium を動かす（任意） | 実際の CDC ツールの変更イベント | これから |
+| | [42 Debezium を動かす（任意）](chapters/42_debezium.md) | 実際の CDC ツールの変更イベント | できた |
 | 第6部 まとめ | 50 自分で描く地図 | 全体の図とパラメータの早見表 | これから |
 
 ## はじめかた

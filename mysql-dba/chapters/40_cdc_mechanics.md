@@ -217,6 +217,7 @@ DROP DATABASE IF EXISTS dba40;
 
 - AWS DMS や Debezium などの CDC のツールは、Aurora のライターに binlog を読む相手として繋ぐ。要る設定（ROW、FULL、保持期間）と、スナップショットとその後の変更をつなぐ考え方は同じ
 - binlog はライターにしかないので、CDC はライターから読む（30章）
+- 最初のスナップショットのつなぎ方も同じ考え方。ただし、RDS や Aurora では `FLUSH TABLES WITH READ LOCK`（全体の読み取りのロック）を使えないので、ツールはテーブルごとのロックなどで代わりにする（42章の Debezium）
 
 ### 違うところ
 

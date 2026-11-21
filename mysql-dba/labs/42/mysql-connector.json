@@ -1,0 +1,17 @@
+{
+  "name": "lab-mysql",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "tasks.max": "1",
+    "database.hostname": "src",
+    "database.port": "3306",
+    "database.user": "cdc",
+    "database.password": "cdc",
+    "database.server.id": "4242",
+    "topic.prefix": "lab",
+    "database.include.list": "dba42",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
+    "schema.history.internal.kafka.topic": "schema-history.lab",
+    "snapshot.mode": "initial"
+  }
+}

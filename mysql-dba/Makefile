@@ -6,7 +6,7 @@ DC := docker compose
 ALL := --profile nobin --profile bg --profile cdc
 MYSQL := $(DC) exec -e MYSQL_PWD=root tools mysql -uroot
 
-.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash binlog nobin-up nobin-down load rebuild-rep bg-up bg-down blue green
+.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash binlog nobin-up nobin-down load rebuild-rep bg-up bg-down blue green cdc-up cdc-down
 
 help:  ## この一覧を表示する
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-12s %s\n", $$1, $$2}'
@@ -95,3 +95,9 @@ blue:  ## blue（8.0）に入る
 
 green:  ## green（8.4）に入る
 	$(MYSQL) -h green --prompt='GREEN [\d]> '
+
+cdc-up:  ## 42章の Kafka と Kafka Connect（Debezium 入り）を立てる（初回はイメージのビルドで数分かかる）
+	$(DC) --profile cdc up -d --wait kafka connect
+
+cdc-down:  ## Kafka と Kafka Connect を止めて消す（トピックとオフセットも消える）
+	$(DC) --profile cdc rm -sf kafka connect
