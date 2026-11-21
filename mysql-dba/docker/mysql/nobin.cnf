@@ -1,0 +1,4 @@
+# binlog を OFF にしたサーバーの設定（20章で、ON の src とコミットの速さを比べる）
+[mysqld]
+server_id = 9
+disable_log_bin

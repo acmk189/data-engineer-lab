@@ -1,0 +1,5 @@
+# 32章の移行先（8.4）の設定。最初は blue のレプリカになる
+[mysqld]
+server_id = 4
+log_bin = binlog
+relay_log = relay-bin

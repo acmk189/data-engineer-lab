@@ -1,0 +1,19 @@
+# make state が src で確かめる変数と、その既定値（make up した直後の値）。
+# 実験で値を変えたら、章の最後でこの値に戻す。
+innodb_flush_log_at_trx_commit=1
+innodb_log_writer_threads=1
+sync_binlog=1
+innodb_buffer_pool_size=134217728
+max_connections=151
+binlog_row_image=FULL
+binlog_row_metadata=MINIMAL
+binlog_format=ROW
+binlog_rows_query_log_events=0
+binlog_group_commit_sync_delay=0
+long_query_time=10.000000
+slow_query_log=0
+innodb_old_blocks_time=1000
+innodb_lru_scan_depth=1024
+transaction_isolation=REPEATABLE-READ
+innodb_lock_wait_timeout=50
+sql_require_primary_key=0
