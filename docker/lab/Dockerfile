@@ -21,6 +21,7 @@ WORKDIR /workspace
 EXPOSE 8888 4040 4041 4042 4043
 
 ENTRYPOINT ["tini", "--"]
-# ポートはホストの 127.0.0.1 にしか公開しないので、トークンなしで開けるようにしている。
+# ポートはホストの 127.0.0.1 にしか公開しないので、固定の簡単なトークン（lab）にしている。
+# トークンなしだと VS Code から繋いだときに XSRF チェックで弾かれる（'_xsrf' argument missing from POST）。
 CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", \
-     "--IdentityProvider.token=", "--ServerApp.root_dir=/workspace"]
+     "--IdentityProvider.token=lab", "--ServerApp.root_dir=/workspace"]

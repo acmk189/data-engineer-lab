@@ -33,7 +33,7 @@ make data    # Spark の実験用の大きいデータを生成する（1分前�
 
 | 何         | どこ                                                                           |
 | ---------- | ------------------------------------------------------------------------------ |
-| JupyterLab | http://localhost:8888                                                          |
+| JupyterLab | http://localhost:8888/lab?token=lab                                                          |
 | Spark UI   | http://localhost:4040 （ノートブックで SparkSession を作っている間だけ開ける） |
 | MySQL      | `localhost:3307`、ユーザー `lab`、パスワード `lab`、データベース `lab`         |
 

@@ -10,7 +10,7 @@ help:  ## この一覧を表示する
 up:  ## コンテナを起動する（初回はイメージのビルドで数分かかる）
 	docker compose up -d --build
 	@echo ""
-	@echo "JupyterLab: http://localhost:8888"
+	@echo "JupyterLab: http://localhost:8888/lab?token=lab"
 	@echo "Spark UI  : http://localhost:4040  （ノートブックで SparkSession を作っている間だけ開ける）"
 	@echo "MySQL     : localhost:3307  user=lab password=lab database=lab"
 

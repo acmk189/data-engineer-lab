@@ -11,4 +11,7 @@ from products p1
 join products p2
     on p1.category = p2.category
     and p1.list_price = p2.list_price
-    AND p2.product_id > p1.product_id;
+    AND p2.product_id > p1.product_id
+order by p1.category,p1.list_price,product_id_1,product_id_2
+
+
