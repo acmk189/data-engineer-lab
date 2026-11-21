@@ -6,7 +6,7 @@ DC := docker compose
 ALL := --profile nobin --profile bg --profile cdc
 MYSQL := $(DC) exec -e MYSQL_PWD=root tools mysql -uroot
 
-.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash
+.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash binlog nobin-up nobin-down
 
 help:  ## この一覧を表示する
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-12s %s\n", $$1, $$2}'
@@ -63,3 +63,12 @@ crash:  ## ソースの mysqld を kill -9 で落として、起動し直す。�
 
 big:  ## 大きいテーブル lab_big.orders_big（約120万行）を作って、レプリカが追いつくまで待つ（10章、11章など）
 	$(DC) exec -T -e MYSQL_PWD=root tools bash -c 'mysql -h src -uroot --table < /lab/labs/common/big_table.sql && bash /lab/bin/wait-replica.sh 900'
+
+binlog:  ## src の binlog を、行の変更が読める形で表示する（既定は今のファイルの最後の200行）。例: make binlog f=binlog.000003 n=1000
+	$(DC) exec -T tools bash /lab/bin/show-binlog.sh "$(f)" "$(n)"
+
+nobin-up:  ## binlog を OFF にしたサーバー（nobin）を立てる（20章）
+	$(DC) --profile nobin up -d --wait nobin
+
+nobin-down:  ## nobin を止めて消す（データのボリュームは残る）
+	$(DC) --profile nobin rm -sf nobin

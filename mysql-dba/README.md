@@ -35,7 +35,7 @@ MySQL の中の仕組みを、解説と Docker の実験で学ぶ学習トラッ
 | | [13 undo と MVCC](chapters/13_undo_mvcc.md) | 古い版の読み取り、purge、履歴リスト | できた |
 | | [14 ロック](chapters/14_locks.md) | 行ロック、ギャップロック、デッドロック | できた |
 | | [15 メタデータロックと Online DDL](chapters/15_mdl_online_ddl.md) | ALTER が全体を止める仕組み | できた |
-| 第3部 binlog | 20 binlog とは | redo との違い、ファイル、保持期間 | これから |
+| 第3部 binlog | [20 binlog とは](chapters/20_binlog_basics.md) | redo との違い、ファイル、保持期間 | できた |
 | | 21 binlog の中身を読む | 形式、イベント、row image、GTID | これから |
 | | 22 コミットの裏側 | redo と binlog をそろえる仕組み、グループコミット | これから |
 | 第4部 レプリケーション | 30 レプリケーションの仕組み | スレッド、relay log、遅延、並列での反映 | これから |
@@ -74,6 +74,7 @@ make up         # 起動して、レプリケーションを設定する
 make a          # ソースにセッション A で入る（make b、make c で2つ目、3つ目）
 make rep        # レプリカに入る
 make sh         # 道具コンテナに入る（mysqlbinlog、sysbench、python などが使える）
+make binlog     # ソースの binlog を読める形で表示する（make binlog n=500 で行数を変える）
 make state      # 実験で変えた設定が残っていないか、レプリケーションが動いているかを確かめる
 make reset      # 全部消して、初期状態から作り直す
 make down       # 止める（データは残る）
