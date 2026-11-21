@@ -6,7 +6,7 @@ DC := docker compose
 ALL := --profile nobin --profile bg --profile cdc
 MYSQL := $(DC) exec -e MYSQL_PWD=root tools mysql -uroot
 
-.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash binlog nobin-up nobin-down load rebuild-rep
+.PHONY: help up down reset ps logs state a b c rep sh verify lint big crash binlog nobin-up nobin-down load rebuild-rep bg-up bg-down blue green
 
 help:  ## この一覧を表示する
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  make %-12s %s\n", $$1, $$2}'
@@ -82,3 +82,16 @@ rebuild-rep:  ## rep を src の clone で作り直して、レプリケーシ�
 	@for i in $$(seq 1 120); do [ -z "$$($(DC) ps -q --status running rep)" ] && break; sleep 1; done
 	$(DC) up -d --wait rep
 	$(DC) exec -T tools bash /lab/bin/setup-replication.sh
+
+bg-up:  ## 32章の blue（8.0、初期データ入り）と green（8.4、空）を立てる。native=ON で green の mysql_native_password を使えるようにする
+	GREEN_NATIVE_PASSWORD=$(or $(native),OFF) $(DC) --profile bg up -d --wait blue green
+
+bg-down:  ## blue と green を止めて、データのボリュームも消す（次の bg-up は最初からになる）
+	$(DC) --profile bg rm -sf blue green
+	docker volume rm -f mysql-dba_blue-data mysql-dba_green-data
+
+blue:  ## blue（8.0）に入る
+	$(MYSQL) -h blue --prompt='BLUE [\d]> ' lab
+
+green:  ## green（8.4）に入る
+	$(MYSQL) -h green --prompt='GREEN [\d]> '

@@ -1,0 +1,4 @@
+# 32章の移行元（8.0）の設定。src と同じく、binlog ON
+[mysqld]
+server_id = 3
+log_bin = binlog
