@@ -1,6 +1,7 @@
 # make state が src で確かめる変数と、その既定値（make up した直後の値）。
 # 実験で値を変えたら、章の最後でこの値に戻す。
 innodb_flush_log_at_trx_commit=1
+innodb_log_writer_threads=1
 sync_binlog=1
 innodb_buffer_pool_size=134217728
 max_connections=151
