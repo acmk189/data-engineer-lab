@@ -15,7 +15,7 @@ MySQL の中の数字には、大きく2つの種類がある。
 - **システム変数**: サーバーの動きを決める設定。`max_connections`、`innodb_buffer_pool_size`、`long_query_time` など。`SHOW VARIABLES LIKE '…'` か `SELECT @@変数名` で見て、変えられるものは `SET` で変える
 - **ステータス変数**: サーバーが報告する状態や回数。`Questions`（受け付けた文の数）、`Threads_connected`（今の接続の数）など。`SHOW STATUS LIKE '…'` で見る。読むだけで、設定はできない
 
-同僚が「パラメータ」と言うときは、たいていシステム変数のこと。Aurora のパラメータグループに並んでいるのも、システム変数になる。ステータス変数の多くは「起動してからの合計」なので、使い方にこつがある（03章）。
+同僚が「パラメータ」と言うときは、たいていシステム変数のこと。Aurora のパラメータグループに並んでいるのも、システム変数になる。ステータス変数の多くは「起動してからの合計」なので、使い方にこつがある（[03章](03_observability.md)）。
 
 ### スコープ: グローバルとセッション
 
@@ -154,7 +154,7 @@ SET GLOBAL innodb_buffer_pool_chunk_size = 8388608;
 <details>
 <summary>何が起きたか</summary>
 
-`ERROR 1238 (HY000): Variable 'innodb_buffer_pool_chunk_size' is a read only variable` になる。バッファプールを区切る単位の大きさは、起動するときにしか決められない（この環境では `docker/mysql/common.cnf` で 16MB にしている）。一方で、バッファプール全体の大きさ（`innodb_buffer_pool_size`）は動的で、動いている間に変えられる。11章で実際に変える。
+`ERROR 1238 (HY000): Variable 'innodb_buffer_pool_chunk_size' is a read only variable` になる。バッファプールを区切る単位の大きさは、起動するときにしか決められない（この環境では `docker/mysql/common.cnf` で 16MB にしている）。一方で、バッファプール全体の大きさ（`innodb_buffer_pool_size`）は動的で、動いている間に変えられる。[11章](11_buffer_pool.md)で実際に変える。
 
 </details>
 
@@ -182,7 +182,7 @@ WHERE VARIABLE_NAME IN ('server_id', 'innodb_buffer_pool_size', 'innodb_buffer_p
 | `max_connections` | COMPILED か DYNAMIC | （なし） |
 | `log_bin` | COMPILED | （なし） |
 
-`max_connections` は、00章や01章の実験で `SET GLOBAL` したなら `DYNAMIC` になっていて、`SET_TIME` に変えた時刻が入っている。既定と同じ 151 に戻しても `DYNAMIC` のまま。「実行中に誰かが触った」という印になる。
+`max_connections` は、[00章](00_setup.md)や[01章](01_overview.md)の実験で `SET GLOBAL` したなら `DYNAMIC` になっていて、`SET_TIME` に変えた時刻が入っている。既定と同じ 151 に戻しても `DYNAMIC` のまま。「実行中に誰かが触った」という印になる。
 
 `log_bin` は、設定ファイルで `log_bin = binlog` と書いているのに `COMPILED` になる。解説の「値の出どころ」の最後にあるとおり、ファイルの項目はファイル名の指定で、システム変数の `log_bin` とは別物のため。
 
@@ -259,7 +259,7 @@ SET GLOBAL Questions = 0;
 <details>
 <summary>何が起きたか</summary>
 
-`Questions` は、流した文の数だけ増える（`SHOW GLOBAL STATUS` 自体も1つと数える）。`SET GLOBAL Questions = 0` は `ERROR 1193 (HY000): Unknown system variable 'Questions'` になる。ステータス変数はシステム変数ではないので、そもそも `SET` の対象にならない。回数を測りたいときは、前と後の差を取る（03章）。
+`Questions` は、流した文の数だけ増える（`SHOW GLOBAL STATUS` 自体も1つと数える）。`SET GLOBAL Questions = 0` は `ERROR 1193 (HY000): Unknown system variable 'Questions'` になる。ステータス変数はシステム変数ではないので、そもそも `SET` の対象にならない。回数を測りたいときは、前と後の差を取る（[03章](03_observability.md)）。
 
 </details>
 
@@ -267,7 +267,7 @@ SET GLOBAL Questions = 0;
 
 ### 同じところ
 
-- システム変数とステータス変数の区別、グローバルとセッション、動的と静的の考え方は同じ。`SHOW VARIABLES`、`SHOW STATUS`、`performance_schema.variables_info` も同じように使える（`performance_schema` が有効なら。03章）
+- システム変数とステータス変数の区別、グローバルとセッション、動的と静的の考え方は同じ。`SHOW VARIABLES`、`SHOW STATUS`、`performance_schema.variables_info` も同じように使える（`performance_schema` が有効なら。[03章](03_observability.md)）
 - 接続プールの落とし穴も同じ。セッションの値を持つパラメータをパラメータグループで変えても、効くのはそれより後に繋いだ接続になる
 
 ### 違うところ
@@ -277,7 +277,7 @@ SET GLOBAL Questions = 0;
   - **DB パラメータグループ**: インスタンスごとに効く。メモリに関わるもの（`innodb_buffer_pool_size` など）はこちらで、インスタンスごとに違う値にできる
   - クラスターのパラメータグループで変えた値は、DB パラメータグループの既定値より優先される
 - 動的なパラメータは、変えるとすぐに効く（再起動は要らない）。静的なパラメータは、インスタンスを再起動したときに効く。それまでは「再起動待ち」（`pending-reboot`）になる
-- 既定値が、インスタンスクラスのメモリから計算する式になっているものがある。たとえば `innodb_buffer_pool_size` はメモリの4分の3、`max_connections` はメモリから計算した値（01章）。インスタンスを大きくすると、既定値も変わる
+- 既定値が、インスタンスクラスのメモリから計算する式になっているものがある。たとえば `innodb_buffer_pool_size` はメモリの4分の3、`max_connections` はメモリから計算した値（[01章](01_overview.md)）。インスタンスを大きくすると、既定値も変わる
 - 変えられないパラメータや、使えなくなっているパラメータがある
 - 動いている間に `SET GLOBAL` で変える運用はしない。インスタンスは再起動（メンテナンスやフェイルオーバー）でパラメータグループの値に戻るし、インスタンスごとに値がずれてしまう。変えるならパラメータグループで変える
 

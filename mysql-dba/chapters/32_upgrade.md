@@ -40,8 +40,8 @@ sequenceDiagram
 |---|---|---|
 | 認証 | `mysql_native_password` が使える（8.0.34 から非推奨） | 既定で使えない（`--mysql-native-password=ON` で起動したときだけ使える） |
 | なくなった変数 | `default_authentication_plugin` | `authentication_policy` を使う |
-| | `expire_logs_days` | `binlog_expire_logs_seconds` を使う（20章） |
-| | `binlog_transaction_dependency_tracking` | WRITESET だけになった（22章） |
+| | `expire_logs_days` | `binlog_expire_logs_seconds` を使う（[20章](20_binlog_basics.md)） |
+| | `binlog_transaction_dependency_tracking` | WRITESET だけになった（[22章](22_commit.md)） |
 | なくなった SQL | `SHOW MASTER STATUS` | `SHOW BINARY LOG STATUS` |
 | | `CHANGE MASTER TO`、`START SLAVE` | `CHANGE REPLICATION SOURCE TO`、`START REPLICA` |
 | | `RESET MASTER` | `RESET BINARY LOGS AND GTIDS` |
@@ -247,12 +247,12 @@ make state
 
 ### 違うところ
 
-- **自動でやってくれること**: グリーン側の環境を作って、ブルーからレプリケーションする。Aurora MySQL 3 では、グリーン側は最初から書き込めない（31章）。切り替えのときは、次の順に進む
+- **自動でやってくれること**: グリーン側の環境を作って、ブルーからレプリケーションする。Aurora MySQL 3 では、グリーン側は最初から書き込めない（[31章](31_replication_trouble.md)）。切り替えのときは、次の順に進む
   1. 切り替えてよいかの確認（ガードレール）。レプリケーションが正常か、遅延が大きすぎないか、外へのレプリケーションがないか、長く続いている書き込みや DDL がないか
   2. 両方の環境で新しい書き込みを止めて、接続を切り、新しい接続を受け付けない
   3. グリーンがブルーに追いつくのを待つ
   4. クラスター、インスタンス、エンドポイントの名前を入れ替える。アプリケーションは、同じエンドポイントのまま新しい環境に繋がる
-- **前提**: binlog を有効にする（カスタムのクラスターのパラメータグループで `binlog_format` を設定して、再起動する。ROW を勧めている）。binlog の保持期間も NULL 以外にしておく（20章）
+- **前提**: binlog を有効にする（カスタムのクラスターのパラメータグループで `binlog_format` を設定して、再起動する。ROW を勧めている）。binlog の保持期間も NULL 以外にしておく（[20章](20_binlog_basics.md)）
 - **切り替える前に確かめること**: グリーン側の `AuroraBinlogReplicaLag` がほぼ0か。長いトランザクションや DDL が流れていないか（切り替えが長引く）。アプリケーションの DNS のキャッシュが5秒より長くないか（長いと、切り替えた後も古い環境に書きに行く）
 - **切り替えた後**: 元のブルー側は読み取り専用にされて、Blue/Green デプロイを消すまでそのまま残る
 

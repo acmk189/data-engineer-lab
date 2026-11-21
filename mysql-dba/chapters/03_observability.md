@@ -71,7 +71,7 @@ flowchart LR
 
 ### sys スキーマ: performance_schema の読みやすい窓
 
-performance_schema のテーブルは、ピコ秒やバイトのままで読みにくい。sys スキーマは、それを「1.00 s」「10.47 ms」のように整えて見せるビューの集まり。`sys.statement_analysis`（重いクエリ）、`sys.waits_global_by_latency`（時間を使っている待ち）、`sys.innodb_lock_waits`（14章）、`sys.schema_table_lock_waits`（15章）などがある。
+performance_schema のテーブルは、ピコ秒やバイトのままで読みにくい。sys スキーマは、それを「1.00 s」「10.47 ms」のように整えて見せるビューの集まり。`sys.statement_analysis`（重いクエリ）、`sys.waits_global_by_latency`（時間を使っている待ち）、`sys.innodb_lock_waits`（[14章](14_locks.md)）、`sys.schema_table_lock_waits`（[15章](15_mdl_online_ddl.md)）などがある。
 
 気をつけることが2つある。
 
@@ -96,7 +96,7 @@ InnoDB の今の様子を、長い文章にまとめて出す。節ごとに読�
 
 `long_query_time`（秒）より時間がかかったクエリを、ファイル（またはテーブル）に記録する。`slow_query_log` で ON・OFF を切り替える。1件ごとに、かかった時間、ロックを待った時間、返した行、読んだ行が残る。`mysqldumpslow` や pt-query-digest のような道具は、このログをクエリの形でまとめて集計する（digest と同じ考え方）。
 
-記録するかどうかは、そのクエリを実行したセッションの `long_query_time` で決まる。02章のスコープの話がそのまま効くので、`SET GLOBAL` で値を下げても、今繋いでいるセッションのクエリは記録されない。
+記録するかどうかは、そのクエリを実行したセッションの `long_query_time` で決まる。[02章](02_parameters.md)のスコープの話がそのまま効くので、`SET GLOBAL` で値を下げても、今繋いでいるセッションのクエリは記録されない。
 
 ### どの道具を使うか
 
@@ -212,9 +212,9 @@ Log flushed up to            22886686
 Last checkpoint at           22886686
 ```
 
-「ここまで書いた」「ここまでディスクに同期した」「ここまでデータファイルに反映した」が全部そろっている、という意味。書き込みが続くと、3つの間に差ができる（12章で見る）。
+「ここまで書いた」「ここまでディスクに同期した」「ここまでデータファイルに反映した」が全部そろっている、という意味。書き込みが続くと、3つの間に差ができる（[12章](12_redo.md)で見る）。
 
-`Buffer pool size` はページの数で、約8,190ページ × 16KB ≒ 128MB になる。`Modified db pages` はダーティページの数で、静かなときは 0 に近い。`History list length` は、purge を待っている古い版の量（13章）。
+`Buffer pool size` はページの数で、約8,190ページ × 16KB ≒ 128MB になる。`Modified db pages` はダーティページの数で、静かなときは 0 に近い。`History list length` は、purge を待っている古い版の量（[13章](13_undo_mvcc.md)）。
 
 </details>
 
@@ -255,7 +255,7 @@ SET GLOBAL long_query_time = 10;
 <details>
 <summary>何が起きたか</summary>
 
-ログに残るのは `from B` だけ。A のセッションの `long_query_time` は、繋いだときにコピーした 10 秒のままなので、1秒のクエリは記録されない（02章のスコープ）。B は `SET GLOBAL` の後に繋いだので 0.5 秒になっている。
+ログに残るのは `from B` だけ。A のセッションの `long_query_time` は、繋いだときにコピーした 10 秒のままなので、1秒のクエリは記録されない（[02章](02_parameters.md)のスコープ）。B は `SET GLOBAL` の後に繋いだので 0.5 秒になっている。
 
 1件の記録は次のような形になる。
 
@@ -294,10 +294,10 @@ wait/io/table/sql/handler               122645      18.35 ms
 wait/io/file/innodb/innodb_dblwr_file       13      12.24 ms
 ```
 
-- `innodb_data_file`: `.ibd` ファイルの読み書き（11章）
-- `innodb_log_file`: redo ログのファイルへの書き込み（12章）
-- `io/table/sql/handler`: サーバー層がストレージエンジン API を通して行を読み書きした待ち（01章の2つの層の境目）
-- `innodb_dblwr_file`: doublewrite のファイル（12章）
+- `innodb_data_file`: `.ibd` ファイルの読み書き（[11章](11_buffer_pool.md)）
+- `innodb_log_file`: redo ログのファイルへの書き込み（[12章](12_redo.md)）
+- `io/table/sql/handler`: サーバー層がストレージエンジン API を通して行を読み書きした待ち（[01章](01_overview.md)の2つの層の境目）
+- `innodb_dblwr_file`: doublewrite のファイル（[12章](12_redo.md)）
 
 Aurora の Database Insights に出る待機イベントも、こういう名前の待ちを、時間を追って集計したものになっている。
 
@@ -315,11 +315,11 @@ Aurora の Database Insights に出る待機イベントも、こういう名前
 - **画面で見る道具**: AWS は Performance Insights の終了を告知していて、CloudWatch Database Insights（Advanced モード）への移行を案内している。どちらも、データベースの負荷（同時に動いているセッションの数の平均）を、待機イベントごと、SQL ごと、ユーザーごとなどに分けて、時間を追って見せる。中身は、この章の performance_schema の待ちとクエリの集計を、時間ごとに取ったものと考えてよい
 - **performance_schema の扱い**: Aurora では、performance_schema を Performance Insights（Database Insights）に自動で管理させるか、自分で管理するかを選ぶ。performance_schema の有効・無効を変えると、再起動が要る。無効だと、細かい待機イベントは見られない
 - **Aurora 独自の待機イベント**: ストレージの作りが違うので、Aurora にしかない待ちがある
-  - `io/redo_log_flush`（v3 の名前。v2 では `io/aurora_redo_log_flush`）: コミットのときに、redo を Aurora のストレージに書き終わるのを待っている。小さいコミットが多いと増える。書き込みをまとめて、コミットの回数を減らすのが対策になる（12章）
+  - `io/redo_log_flush`（v3 の名前。v2 では `io/aurora_redo_log_flush`）: コミットのときに、redo を Aurora のストレージに書き終わるのを待っている。小さいコミットが多いと増える。書き込みをまとめて、コミットの回数を減らすのが対策になる（[12章](12_redo.md)）
   - `io/aurora_respond_to_client`: 結果をクライアントに送り終わるのを待っている。クライアント側やネットワークが遅いと増える
-  - メタデータロックの待ち（`synch/cond/sql/MDL_context::COND_wait_status`）のように、普通の MySQL と同じ名前のものも多い（15章）
+  - メタデータロックの待ち（`synch/cond/sql/MDL_context::COND_wait_status`）のように、普通の MySQL と同じ名前のものも多い（[15章](15_mdl_online_ddl.md)）
 - **スロークエリログ**: `slow_query_log` や `long_query_time` はパラメータグループで設定する。ログのファイルはコンソールから見たり、CloudWatch Logs に送ったりする
-- **INNODB STATUS**: 使えるけれど、LOG の節の数字（チェックポイントなど）は、ストレージの作りが違うので、普通の MySQL と同じ意味では読めない（12章）
+- **INNODB STATUS**: 使えるけれど、LOG の節の数字（チェックポイントなど）は、ストレージの作りが違うので、普通の MySQL と同じ意味では読めない（[12章](12_redo.md)）
 
 ### 業務の Aurora で見てみるなら
 

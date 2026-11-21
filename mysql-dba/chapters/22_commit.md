@@ -10,10 +10,10 @@
 
 ### 2つのログを食い違わないようにする
 
-同じ変更が、redo ログ（InnoDB）と binlog（サーバー層）の2か所に書かれる（20章）。もし落ちた後に、この2つの中身が食い違っていたら困る。
+同じ変更が、redo ログ（InnoDB）と binlog（サーバー層）の2か所に書かれる（[20章](20_binlog_basics.md)）。もし落ちた後に、この2つの中身が食い違っていたら困る。
 
 - **binlog にあって、InnoDB にない**: レプリカは binlog を受け取って反映しているので、レプリカにはあるのに、ソースにはない行ができる
-- **InnoDB にあって、binlog にない**: ソースにはあるのに、レプリカには届かない。binlog を流し直す復旧（20章）でも戻ってこない
+- **InnoDB にあって、binlog にない**: ソースにはあるのに、レプリカには届かない。binlog を流し直す復旧（[20章](20_binlog_basics.md)）でも戻ってこない
 
 どちらも、レプリカとソースの中身がずれる。そこで MySQL は、1つのトランザクションのコミットを2段階に分けて、2つのログをそろえている。
 
@@ -40,7 +40,7 @@ sequenceDiagram
 
 ### 両方1
 
-この仕組みが働くのは、1 と 3 の書き込みが、落ちても消えないところまで届いているとき。`innodb_flush_log_at_trx_commit`（12章）と `sync_binlog` が、それぞれを決めている。
+この仕組みが働くのは、1 と 3 の書き込みが、落ちても消えないところまで届いているとき。`innodb_flush_log_at_trx_commit`（[12章](12_redo.md)）と `sync_binlog` が、それぞれを決めている。
 
 | `innodb_flush_log_at_trx_commit` | `sync_binlog` | mysqld が落ちたとき | OS ごと落ちたとき（この環境では試せない） |
 |---|---|---|---|
@@ -63,17 +63,17 @@ sequenceDiagram
 
 1本の接続から順にコミットするだけなら、まとめる相手がいないので、1件ごとに fsync する。同時にたくさんの接続がコミットすると、1回の fsync の間に後ろに次の分がたまって、自然にまとまる。`binlog_group_commit_sync_delay` を大きくすると、fsync はさらに減るけれど、1件ごとのコミットは待つ分だけ遅くなる。
 
-同じグループでコミットしたトランザクションは、互いに邪魔をしていなかったことが分かっている。8.0 の COMMIT_ORDER という方式では、それを手がかりにレプリカが並べて反映する（30章）。8.4 では、変えた行が重ならないかどうかで決める WRITESET の方式だけになった。
+同じグループでコミットしたトランザクションは、互いに邪魔をしていなかったことが分かっている。8.0 の COMMIT_ORDER という方式では、それを手がかりにレプリカが並べて反映する（[30章](30_replication.md)）。8.4 では、変えた行が重ならないかどうかで決める WRITESET の方式だけになった。
 
 ### binlog キャッシュと大きいトランザクション
 
-トランザクションの途中の変更は、セッションごとの binlog キャッシュにためておく（20章）。大きさは `binlog_cache_size`（既定は32KB）で、それを超えると一時ファイルに書く。一時ファイルを使ったトランザクションの数が、ステータス変数 `Binlog_cache_disk_use` に数えられる。
+トランザクションの途中の変更は、セッションごとの binlog キャッシュにためておく（[20章](20_binlog_basics.md)）。大きさは `binlog_cache_size`（既定は32KB）で、それを超えると一時ファイルに書く。一時ファイルを使ったトランザクションの数が、ステータス変数 `Binlog_cache_disk_use` に数えられる。
 
 キャッシュの中身は、コミットの flush の段階で、まとめて binlog に書く。だから、1つのトランザクションで何十万行も変えると、コミットの瞬間に何十MB も書くことになる。大きいトランザクションが嫌われる理由は、ここから来ている。
 
 - **コミットが重い**: 何十MB を一度に書く。binlog には順番に書くので、その間に来たほかのセッションのコミットも待たされる
 - **レプリカが遅れる**: レプリカは、1つのトランザクションを分けて反映できない。反映し終わるまでは、その変更はレプリカから全く見えず、後ろに続くトランザクションも待たされる
-- **CDC に一度に押し寄せる**: CDC のツールには、何十万行分の変更が一度に届く。下流のシステムが受け止めきれないことがある（40章）
+- **CDC に一度に押し寄せる**: CDC のツールには、何十万行分の変更が一度に届く。下流のシステムが受け止めきれないことがある（[40章](40_cdc_mechanics.md)）
 - **binlog のファイルが大きくなる**: トランザクションは途中で分けずに1つのファイルに書くので、`max_binlog_size` を超える
 
 大きい `UPDATE` や `DELETE` は、主キーの範囲で区切って、数千行くらいずつの小さいトランザクションに分けて流すのが定石。
@@ -171,14 +171,14 @@ python /lab/labs/22/big_txn.py --rows 300000
 
 **予想:** `innodb_flush_log_at_trx_commit=0`（`sync_binlog` は 1 のまま）で、書き込みの途中に mysqld を kill -9 で落とす。ソースとレプリカの行の数は同じになる？ 両方1ならどう？
 
-`make a` で設定を変える。`innodb_log_writer_threads` を OFF にするのは、違いをはっきり見るため。8.0 からは redo を書く裏方のスレッドがすぐに書くので、そのままだと消えるのは直前の1件くらいで、消えないこともある（12章）。OFF にすると、redo は1秒に1回しか書かれなくなる。どちらも、起動し直すと設定ファイルの値（1 と ON）に戻る。
+`make a` で設定を変える。`innodb_log_writer_threads` を OFF にするのは、違いをはっきり見るため。8.0 からは redo を書く裏方のスレッドがすぐに書くので、そのままだと消えるのは直前の1件くらいで、消えないこともある（[12章](12_redo.md)）。OFF にすると、redo は1秒に1回しか書かれなくなる。どちらも、起動し直すと設定ファイルの値（1 と ON）に戻る。
 
 ```sql
 SET GLOBAL innodb_flush_log_at_trx_commit = 0;
 SET GLOBAL innodb_log_writer_threads = OFF;
 ```
 
-ターミナルを2つ使う。1つ目で、1件ずつコミットし続けるスクリプトを流す（12章と同じ）。
+ターミナルを2つ使う。1つ目で、1件ずつコミットし続けるスクリプトを流す（[12章](12_redo.md)と同じ）。
 
 ```bash
 make sh
@@ -243,10 +243,10 @@ SET GLOBAL sync_binlog = 1;
 ### 違うところ
 
 - **sync_binlog は変えられない**: Aurora MySQL のパラメータの一覧で、変更できないものになっている
-- **innodb_flush_log_at_trx_commit の意味が違う**: Aurora では「ストレージの確認を待つかどうか」の設定になっていて、v3 で 1 以外にするには、先に `innodb_trx_commit_allow_data_loss` を 1 にする必要がある（12章）
+- **innodb_flush_log_at_trx_commit の意味が違う**: Aurora では「ストレージの確認を待つかどうか」の設定になっていて、v3 で 1 以外にするには、先に `innodb_trx_commit_allow_data_loss` を 1 にする必要がある（[12章](12_redo.md)）
 - **binlog_group_commit_sync_delay は変えられる**: Aurora MySQL 3 では、クラスターのパラメータで設定できる。AWS の説明では、待つほどトランザクションがまとまってレプリカで並べて反映しやすくなる代わりに、ソースのコミットが少し遅くなる、としている（COMMIT_ORDER の方式のとき）
-- **拡張バイナリログ（enhanced binlog）**: binlog とトランザクションのログを、ストレージに並べて書く。binlog を ON にしたときのコミットの負担が小さくなり、再起動のときの binlog の復旧も速くなる。使うときの設定は `aurora_enhanced_binlog=1`、`binlog_backup=0`、`binlog_replication_globaldb=0`（20章）。制限の一覧には、`binlog_group_commit_sync_delay` と `binlog_group_commit_sync_no_delay_count` が入っている
-- **再起動に時間がかかる**: binlog を ON にすると、予期しない再起動の後に、この章の XA の復旧（binlog の復旧）が要る（20章）
+- **拡張バイナリログ（enhanced binlog）**: binlog とトランザクションのログを、ストレージに並べて書く。binlog を ON にしたときのコミットの負担が小さくなり、再起動のときの binlog の復旧も速くなる。使うときの設定は `aurora_enhanced_binlog=1`、`binlog_backup=0`、`binlog_replication_globaldb=0`（[20章](20_binlog_basics.md)）。制限の一覧には、`binlog_group_commit_sync_delay` と `binlog_group_commit_sync_no_delay_count` が入っている
+- **再起動に時間がかかる**: binlog を ON にすると、予期しない再起動の後に、この章の XA の復旧（binlog の復旧）が要る（[20章](20_binlog_basics.md)）
 
 ### 業務の Aurora で見てみるなら
 
@@ -259,7 +259,7 @@ SHOW GLOBAL STATUS LIKE 'Binlog_cache%';
 
 - `Binlog_cache_use`（binlog キャッシュを使ったトランザクションの数）に比べて `Binlog_cache_disk_use` が多いなら、キャッシュに収まらない大きいトランザクションがよく流れている
 - 大きい `UPDATE` や `DELETE` を流す前に、主キーの範囲で分けて、小さいトランザクションにできないかを考える
-- 待機イベントの `io/file/sql/binlog`（20章）が多いなら、コミットの数が多い。まとめて流せる処理は、1つのトランザクションにいくつかの文を入れる
+- 待機イベントの `io/file/sql/binlog`（[20章](20_binlog_basics.md)）が多いなら、コミットの数が多い。まとめて流せる処理は、1つのトランザクションにいくつかの文を入れる
 
 業務の Aurora で見た値はこのリポジトリに書かない。
 

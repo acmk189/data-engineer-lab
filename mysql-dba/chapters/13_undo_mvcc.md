@@ -11,7 +11,7 @@
 
 ### undo: 書き換える前の値
 
-行を書き換えるとき、InnoDB は書き換える前の値を **undo** に残す（01章の旅の7番目）。行には見えない列が2つ付いていて（10章）、`DB_TRX_ID` に最後に書き換えたトランザクションの番号、`DB_ROLL_PTR` に undo への道しるべが入っている。同じ行を何度も書き換えると、undo は古い版のくさりになる。
+行を書き換えるとき、InnoDB は書き換える前の値を **undo** に残す（[01章](01_overview.md)の旅の7番目）。行には見えない列が2つ付いていて（[10章](10_storage.md)）、`DB_TRX_ID` に最後に書き換えたトランザクションの番号、`DB_ROLL_PTR` に undo への道しるべが入っている。同じ行を何度も書き換えると、undo は古い版のくさりになる。
 
 ```text
 クラスタインデックスの行（最新の版）
@@ -22,7 +22,7 @@
 
 undo には2つの使い道がある。
 
-- **取り消し**: ROLLBACK や、クラッシュした後にコミットしていなかったものを消すとき（12章）
+- **取り消し**: ROLLBACK や、クラッシュした後にコミットしていなかったものを消すとき（[12章](12_redo.md)）
 - **古い版の読み取り**: ほかのトランザクションが「書き換える前の値」を読むとき（次の MVCC）
 
 INSERT の undo は取り消しにしか使わないので、コミットした時点で要らなくなる。DELETE は、行をすぐには消さずに「消した」という印を付けて、後で片付ける。undo は undo 表領域（`undo_001`、`undo_002`）にあって、普通のページと同じようにバッファプールを通して読み書きされ、redo で守られている。
@@ -42,11 +42,11 @@ MVCC（Multi-Version Concurrency Control）は、行の古い版を残してお�
 
 ほかに READ UNCOMMITTED（コミットしていない値も読む）と SERIALIZABLE（普通の SELECT もロックを取る）があるけれど、ふだん使うのは上の2つ。PostgreSQL や Oracle など、READ COMMITTED を既定にしているデータベースも多い。
 
-もう1つ大事なのが、**ロックを取る読み取り**（`SELECT … FOR UPDATE`、`SELECT … FOR SHARE`、それと UPDATE や DELETE が対象の行を探すとき）。これは古い版ではなく、コミット済みの最新の版を読んで、ロックをかける（current read。14章）。だから REPEATABLE READ では、同じトランザクションの中で、普通の SELECT と `SELECT … FOR SHARE` が違う値を返すことがある（実験1）。
+もう1つ大事なのが、**ロックを取る読み取り**（`SELECT … FOR UPDATE`、`SELECT … FOR SHARE`、それと UPDATE や DELETE が対象の行を探すとき）。これは古い版ではなく、コミット済みの最新の版を読んで、ロックをかける（current read。[14章](14_locks.md)）。だから REPEATABLE READ では、同じトランザクションの中で、普通の SELECT と `SELECT … FOR SHARE` が違う値を返すことがある（実験1）。
 
 ### purge と履歴リスト
 
-古い版は、それを見るかもしれない読み取りビューがある間は消せない。どの読み取りビューからも要らなくなった undo（と、消した印の付いた行）を片付けるのが、裏方の **purge** のスレッド（01章の実験3で見た `srv_purge_thread`）。
+古い版は、それを見るかもしれない読み取りビューがある間は消せない。どの読み取りビューからも要らなくなった undo（と、消した印の付いた行）を片付けるのが、裏方の **purge** のスレッド（[01章](01_overview.md)の実験3で見た `srv_purge_thread`）。
 
 コミットしたけれど、まだ purge が片付けていない undo の量を **履歴リストの長さ**（History list length、HLL）と呼ぶ。`SHOW ENGINE INNODB STATUS` の TRANSACTIONS の節や、`information_schema.INNODB_METRICS` の `trx_rseg_history_len` で見られる。
 

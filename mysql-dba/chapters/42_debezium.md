@@ -12,7 +12,7 @@
 
 ### 全体の構成
 
-Debezium は、オープンソースの CDC のツール。Kafka Connect（Kafka にデータを出し入れするための仕組み）の上で動くコネクターとして作られている。MySQL のコネクターは、40章と同じくレプリカのふりをして binlog を受け取って、行の変更を1件ずつイベントにして、Kafka のトピックに書く。
+Debezium は、オープンソースの CDC のツール。Kafka Connect（Kafka にデータを出し入れするための仕組み）の上で動くコネクターとして作られている。MySQL のコネクターは、[40章](40_cdc_mechanics.md)と同じくレプリカのふりをして binlog を受け取って、行の変更を1件ずつイベントにして、Kafka のトピックに書く。
 
 ```mermaid
 flowchart LR
@@ -34,7 +34,7 @@ flowchart LR
 ```
 
 - トピックの名前は「`topic.prefix`.データベース.テーブル」。この環境では `lab.dba42.t`
-- `schema-history.lab` には、Debezium が読んだ DDL が順にたまる。起動し直したときに、これを読み直して、そのときのテーブルの定義を組み立てる（41章の「スキーマの履歴」）
+- `schema-history.lab` には、Debezium が読んだ DDL が順にたまる。起動し直したときに、これを読み直して、そのときのテーブルの定義を組み立てる（[41章](41_mini_cdc.md)の「スキーマの履歴」）
 - `connect-offsets` は、Kafka Connect の内部のトピック。どこまで読んだかが入る
 
 ### 変更のイベントの形
@@ -60,13 +60,13 @@ flowchart LR
 - `source`: どこから来た変更か。データベースとテーブル、ソースの `server_id`、GTID、binlog のファイルと位置、スナップショットかどうか、ソースでコミットした時刻（`ts_ms`）
 - いちばん外の `ts_ms`: Debezium がこのイベントを作った時刻。`source.ts_ms` との差が、CDC の遅れになる
 
-41章の cdc.py が出していたものと、ほぼ同じ形をしている。
+[41章](41_mini_cdc.md)の cdc.py が出していたものと、ほぼ同じ形をしている。
 
 ### スナップショットから、変更の流し込みへ
 
 `snapshot.mode=initial`（初めて起動したとき、オフセットがなければ、まずスナップショットを取る）にすると、Debezium は次の順に進む。
 
-1. 全体の読み取りのロック（40章の `FLUSH TABLES WITH READ LOCK`）をかけて、REPEATABLE READ のトランザクションを始め、binlog の位置と GTID の集まり、テーブルの定義を読む。ここまで済んだら、ロックを外す（`snapshot.locking.mode=minimal`、既定）。40章の境目と同じ考え方
+1. 全体の読み取りのロック（[40章](40_cdc_mechanics.md)の `FLUSH TABLES WITH READ LOCK`）をかけて、REPEATABLE READ のトランザクションを始め、binlog の位置と GTID の集まり、テーブルの定義を読む。ここまで済んだら、ロックを外す（`snapshot.locking.mode=minimal`、既定）。[40章](40_cdc_mechanics.md)の境目と同じ考え方
 2. 対象のテーブルを全部読んで、1行ずつ `op: "r"` のイベントにする。最初の行には `snapshot: "first"`、最後の行には `snapshot: "last"` の印が付く
 3. 読み終わったら、記録した位置から binlog の変更を流し始める。ここから先のイベントは `snapshot: "false"` で、`source.gtid` が入る
 
@@ -83,7 +83,7 @@ Debezium のオフセットは、`connect-offsets` というトピックに入�
 
 GTID の集まり（`gtids`）と、binlog のファイルと位置に加えて、そのトランザクションの中で何番目のイベントの何行目まで送ったか（`event`、`row`）まで覚えている。起動し直したときは、トランザクションの頭から読み直して、送り済みの分を飛ばす。
 
-ただし、Kafka Connect がオフセットを書くのは、一定の間隔ごと（`offset.flush.interval.ms`、既定は60秒）と、きちんと止めたとき。きちんと止めずに落ちると、最後に書いたオフセットから読み直すので、その間のイベントがもう一度届く。Debezium の約束も「少なくとも1回」（40章）で、使う側は同じイベントが来ても困らないように作る。
+ただし、Kafka Connect がオフセットを書くのは、一定の間隔ごと（`offset.flush.interval.ms`、既定は60秒）と、きちんと止めたとき。きちんと止めずに落ちると、最後に書いたオフセットから読み直すので、その間のイベントがもう一度届く。Debezium の約束も「少なくとも1回」（[40章](40_cdc_mechanics.md)）で、使う側は同じイベントが来ても困らないように作る。
 
 ### 削除と tombstone
 
@@ -225,12 +225,12 @@ make state
 
 ### 同じところ
 
-- Debezium も AWS DMS も、Aurora のライターの binlog を、レプリカのふりをして読む（40章）。ROW、FULL、保持期間の要件と、スナップショットからのつなぎ方の考え方は同じ
+- Debezium も AWS DMS も、Aurora のライターの binlog を、レプリカのふりをして読む（[40章](40_cdc_mechanics.md)）。ROW、FULL、保持期間の要件と、スナップショットからのつなぎ方の考え方は同じ
 - Debezium の約束が「少なくとも1回」なのも同じで、使う側は重なりを吸収する
 
 ### 違うところ
 
-- **binlog を有効にするところから**: Aurora では binlog が既定で OFF なので、クラスターのパラメータグループで有効にして、再起動する（20章）
+- **binlog を有効にするところから**: Aurora では binlog が既定で OFF なので、クラスターのパラメータグループで有効にして、再起動する（[20章](20_binlog_basics.md)）
 - **スナップショットのロック**: RDS や Aurora では全体の読み取りのロック（`FLUSH TABLES WITH READ LOCK`）を使えないので、Debezium はテーブルごとのロックに切り替えてスナップショットを取る。そのために `LOCK TABLES` の権限が要る（この環境の `cdc` ユーザーにも付けてある）
 - **AWS DMS**: 移し方の種類に、全部を移す（full-load）、変更だけを写す（cdc）、全部を移してから変更を写し続ける（full-load-and-cdc）がある。CDC には `REPLICATION CLIENT` と `REPLICATION SLAVE` の権限、ROW と FULL が要る。どこまで読んだかは、タスクの CDC のリカバリーのチェックポイントとして残って、そこから再開できる。全部を移している途中でソースが止まると、タスクはエラーにならずに終わるのに、ターゲットがずれていることがある（AWS のドキュメントの注意）
 - **ゼロ ETL 統合**: 送り先は Amazon Redshift か Amazon SageMaker Lakehouse。最初に全部を読み込んだ後、Aurora に書かれてから数秒のうちに写し続ける。Aurora MySQL では、拡張バイナリログが要る
@@ -262,7 +262,7 @@ SHOW GLOBAL STATUS LIKE 'aurora_enhanced_binlog';
 ## 説明できるか確かめる
 
 1. Debezium の変更のイベントの `op`、`before`、`after`、`source` には、それぞれ何が入っている？（実験2）
-2. Debezium は、スナップショットから変更の流し込みに、どうやって漏れなく切り替えている？ 40章のやり方と比べて説明できる？（「スナップショットから、変更の流し込みへ」）
+2. Debezium は、スナップショットから変更の流し込みに、どうやって漏れなく切り替えている？ [40章](40_cdc_mechanics.md)のやり方と比べて説明できる？（「スナップショットから、変更の流し込みへ」）
 3. Debezium は、どこまで読んだかをどこに保存している？ Kafka Connect が急に落ちると、何が起きる？（実験3）
 4. 削除の後に、値が null のメッセージが来るのはなぜ？（「削除と tombstone」）
 5. Debezium、AWS DMS、ゼロ ETL 統合は、それぞれどんなときに選ぶ？（「Debezium、AWS DMS、ゼロ ETL 統合」）

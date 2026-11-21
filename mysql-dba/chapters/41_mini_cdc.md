@@ -10,7 +10,7 @@
 
 ### cdc.py のつくり
 
-`labs/41/cdc.py` は、説明のコメントを入れても140行ほどの小さな CDC。Python のライブラリ python-mysql-replication を使って、40章の「レプリカのふり」を自分で書いている。
+`labs/41/cdc.py` は、説明のコメントを入れても140行ほどの小さな CDC。Python のライブラリ python-mysql-replication を使って、[40章](40_cdc_mechanics.md)の「レプリカのふり」を自分で書いている。
 
 ```mermaid
 flowchart LR
@@ -23,7 +23,7 @@ flowchart LR
 
 中身は3つの部分に分かれる。
 
-- **レプリカのふりをするところ**: `BinLogStreamReader` に、`cdc` ユーザー、名乗る `server_id`（4141）、どこから読むかの GTID の集まり（`auto_position`）を渡す。ソースから見ると、30章のレプリカと同じ
+- **レプリカのふりをするところ**: `BinLogStreamReader` に、`cdc` ユーザー、名乗る `server_id`（4141）、どこから読むかの GTID の集まり（`auto_position`）を渡す。ソースから見ると、[30章](30_replication.md)のレプリカと同じ
 - **行の変更を読み解くところ**: `Gtid` のイベントで今のトランザクションの GTID を覚えて、`Write_rows`、`Update_rows`、`Delete_rows` のイベントの行を、`op`（`c`、`u`、`d`）と `before`、`after` を持つ JSON にして出す。DDL は、`Query` のイベントの文を `op: "ddl"` として出す
 - **どこまで読んだかを覚えるところ**: `Xid` のイベント（トランザクションの終わり）や DDL が来るたびに、そのトランザクションの GTID を「読み終わった集まり」に足して、オフセットのファイルに書く。起動し直すと、その集まりの続きから読む
 
@@ -46,7 +46,7 @@ elif isinstance(event, XidEvent):
 | 書かれていない列と NULL | ライブラリは、row image に書かれていない列を null で埋める。そのまま下流に流すと、本当の値を NULL で上書きしてしまう | イベントの `columns_present_bitmap`（どの列が書かれているかの印）を見る。cdc.py もそうしている |
 | テーブルの定義の変更 | DDL は文のまま届く。cdc.py は文を流すだけ（実験5） | DDL を読み解いて、下流のテーブルの定義も変える。列の名前や型の変更は特に難しい |
 | 主キーのないテーブル | 下流で、どの行を変えればよいかを決める手がかりがない | 主キーを必須にする。または全部の列の値で行を見分ける |
-| 大きいトランザクション | `Xid` が来るまで、オフセットが進まない。何十万行が一度に出る（22章） | 下流に流す量を調節する |
+| 大きいトランザクション | `Xid` が来るまで、オフセットが進まない。何十万行が一度に出る（[22章](22_commit.md)） | 下流に流す量を調節する |
 | 届き方 | 行を出してから、オフセットを書くまでの間に落ちると、起動し直したときに同じトランザクションをもう一度出す | 受け取る側を冪等にする（主キーで上書きする、など） |
 
 ### 少なくとも1回か、多くても1回か
@@ -90,7 +90,7 @@ INSERT INTO dba41.t VALUES (1, 1, 'a');
 {"after": {"UNKNOWN_COL0": 1, "UNKNOWN_COL1": 1, "UNKNOWN_COL2": "a"}, "before": null, "gtid": "d10e7af6-…:504831", "op": "c", "schema": "dba41", "table": "t"}
 ```
 
-binlog には列の名前がないので（21章）、ライブラリは「0番目の列」「1番目の列」としか言えない。ライブラリは、`BINLOG_ROW_METADATA = FULL` と `BINLOG_ROW_IMAGE = FULL` にするよう、警告も出す（標準エラー出力）。
+binlog には列の名前がないので（[21章](21_binlog_events.md)）、ライブラリは「0番目の列」「1番目の列」としか言えない。ライブラリは、`BINLOG_ROW_METADATA = FULL` と `BINLOG_ROW_IMAGE = FULL` にするよう、警告も出す（標準エラー出力）。
 
 </details>
 
@@ -212,7 +212,7 @@ CREATE TABLE dba41.nopk (a INT);
 {"after": {"extra": 7, "id": 20, "note": "z", "v": 20}, "before": null, "gtid": "…", "op": "c", "schema": "dba41", "table": "t"}
 ```
 
-DDL は文のまま届く。`schema` には、その文を流したときの既定のデータベース（`USE` で選んだもの）が入る。上の結果は `USE` をしていない接続で流したので空で、`make a` から流すと `lab` になる。DDL の対象のテーブルと同じとは限らないので、実際のツールは文を読み解いて、どのテーブルの変更かを決めている。その後の INSERT には、新しい列 `extra` が入っている。`binlog_row_metadata=FULL` なので、`Table_map` に新しい定義の列の名前が並んでいる（21章）。
+DDL は文のまま届く。`schema` には、その文を流したときの既定のデータベース（`USE` で選んだもの）が入る。上の結果は `USE` をしていない接続で流したので空で、`make a` から流すと `lab` になる。DDL の対象のテーブルと同じとは限らないので、実際のツールは文を読み解いて、どのテーブルの変更かを決めている。その後の INSERT には、新しい列 `extra` が入っている。`binlog_row_metadata=FULL` なので、`Table_map` に新しい定義の列の名前が並んでいる（[21章](21_binlog_events.md)）。
 
 `sql_require_primary_key` を ON にすると、主キーのないテーブルは作れない（エラー 3750）。CDC で流すテーブルに主キーがないと、下流でどの行を変えればよいかを決められないので、最初から作らせないようにできる。
 
@@ -243,10 +243,10 @@ DROP DATABASE IF EXISTS dba41;
 | `binlog_format` が ROW でない（既定の OFF を含む） | 行の変更が取れない。AWS DMS の CDC は ROW が必須 | `SELECT @@binlog_format;` |
 | `binlog_row_image` が FULL でない | 前と後の値が欠ける（実験4）。DMS は FULL が必須 | `SELECT @@binlog_row_image;` |
 | `binlog_row_metadata` が MINIMAL | binlog に列の名前がない。ツールの側でテーブルの定義を追う必要がある（実験1） | `SELECT @@binlog_row_metadata;` |
-| binlog の保持期間が短い | CDC のツールが止まっている間に binlog が消えて、続きから読めない。取り直しになる（40章） | `CALL mysql.rds_show_configuration;` |
-| 拡張バイナリログ | DMS が対応していない。ゼロ ETL 統合では必須。バックアップやクローンに入らない（20章） | `SHOW GLOBAL STATUS LIKE 'aurora_enhanced_binlog';` |
+| binlog の保持期間が短い | CDC のツールが止まっている間に binlog が消えて、続きから読めない。取り直しになる（[40章](40_cdc_mechanics.md)） | `CALL mysql.rds_show_configuration;` |
+| 拡張バイナリログ | DMS が対応していない。ゼロ ETL 統合では必須。バックアップやクローンに入らない（[20章](20_binlog_basics.md)） | `SHOW GLOBAL STATUS LIKE 'aurora_enhanced_binlog';` |
 | 主キーやユニークキーのないテーブル | 下流で行を見分けられない。DMS の事前の評価でも、ターゲット側の更新や削除が全件の走査になると注意している | 下の SQL |
-| 大きいトランザクション | 何十万行の変更が一度に届いて、下流が詰まる（22章） | `SHOW GLOBAL STATUS LIKE 'Binlog_cache%';` |
+| 大きいトランザクション | 何十万行の変更が一度に届いて、下流が詰まる（[22章](22_commit.md)） | `SHOW GLOBAL STATUS LIKE 'Binlog_cache%';` |
 
 `sql_require_primary_key` は MySQL 8.0.13 からある変数。Aurora で設定できるかは、使っているパラメータグループで確かめる。
 
