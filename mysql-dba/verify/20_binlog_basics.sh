@@ -2,16 +2,16 @@
 # 20章: binlog のファイルとローテーション、保持期間。binlog が ON と OFF で、コミットのときの fsync がどう変わるか
 source "$(dirname "$0")/lib.sh"
 
-n0=$(sql src 'SHOW BINARY LOGS' | wc -l); f0=$(binlog_file src)
+n0=$(sql src 'SHOW BINARY LOGS' | grep -c .); f0=$(binlog_file src)
 sql src 'FLUSH BINARY LOGS'
-expect_eq "$(sql src 'SHOW BINARY LOGS' | wc -l)" "$((n0 + 1))" "FLUSH BINARY LOGS でファイルが1つ増える"
+expect_eq "$(sql src 'SHOW BINARY LOGS' | grep -c .)" "$((n0 + 1))" "FLUSH BINARY LOGS でファイルが1つ増える"
 expect_ne "$(binlog_file src)" "$f0" "書き込み先が新しいファイルに変わる"
 
 # レプリカが古いファイルを読み終わってから消す（読んでいる途中のファイルは消えない）
 wait_caught_up
-purge_to_current() { sql src "PURGE BINARY LOGS TO '$(binlog_file src)'" && [ "$(sql src 'SHOW BINARY LOGS' | wc -l)" = 1 ]; }
+purge_to_current() { sql src "PURGE BINARY LOGS TO '$(binlog_file src)'" && [ "$(sql src 'SHOW BINARY LOGS' | grep -c .)" = 1 ]; }
 wait_for 30 purge_to_current
-expect_eq "$(sql src 'SHOW BINARY LOGS' | wc -l)" 1 "PURGE で古いファイルが消える"
+expect_eq "$(sql src 'SHOW BINARY LOGS' | grep -c .)" 1 "PURGE で古いファイルが消える"
 expect_eq "$(sql src 'SELECT @@binlog_expire_logs_seconds')" 2592000 "保持期間の既定は30日"
 
 make -s nobin-up

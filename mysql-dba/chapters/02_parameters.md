@@ -280,6 +280,7 @@ SET GLOBAL Questions = 0;
 - 既定値が、インスタンスクラスのメモリから計算する式になっているものがある。たとえば `innodb_buffer_pool_size` はメモリの4分の3、`max_connections` はメモリから計算した値（[01章](01_overview.md)）。インスタンスを大きくすると、既定値も変わる
 - 変えられないパラメータや、使えなくなっているパラメータがある
 - 動いている間に `SET GLOBAL` で変える運用はしない。インスタンスは再起動（メンテナンスやフェイルオーバー）でパラメータグループの値に戻るし、インスタンスごとに値がずれてしまう。変えるならパラメータグループで変える
+- 管理用のマスターユーザーは `SUPER` を持たない。グローバルな変数を `SET GLOBAL` や `SET PERSIST` で変えようとしても、多くは権限のエラー（1227）になる。`SUPER` が要る操作の一部は、`mysql.rds_*` のストアドプロシージャで代わりにやる。binlog の保持期間を決める `mysql.rds_set_configuration`（[20章](20_binlog_basics.md)）、レプリケーションのエラーを飛ばす `mysql.rds_skip_repl_error`（[31章](31_replication_trouble.md)）、接続を切る `mysql.rds_kill` など。この環境では DBA の立場で操作するために root を使っているので、ここが違う
 
 対応をまとめると、次のようになる。
 
@@ -310,6 +311,7 @@ WHERE VARIABLE_NAME IN ('innodb_buffer_pool_size', 'max_connections', 'long_quer
 - [Overview of parameter groups（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/parameter-groups-overview.html)
 - [DB cluster parameter groups for Amazon Aurora DB clusters（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_WorkingWithDBClusterParamGroups.html)
 - [Aurora MySQL configuration parameters（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Reference.ParameterGroups.html)
+- [Master user account privileges（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.MasterAccounts.html)
 
 ## 説明できるか確かめる
 

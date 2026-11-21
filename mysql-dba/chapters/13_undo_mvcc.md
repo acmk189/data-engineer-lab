@@ -67,7 +67,7 @@ MVCC（Multi-Version Concurrency Control）は、行の古い版を残してお�
 
 ### Snowflake の Time Travel と比べると
 
-Snowflake の Time Travel や Delta Lake のトランザクションログも、古い版を残しておく仕組み。ただし向きが逆になっている。Snowflake は、書き換えた後のマイクロパーティションのファイルを、決めた期間（保持期間）残しておく。古い版を残すのは目的そのもので、払うのはストレージの費用。InnoDB は、古い版を「見る人がいる間だけ」残して、purge がすぐに片付ける。古い版を長く残すことになる長いトランザクションは、性能の問題になる。
+Snowflake の Time Travel や Delta Lake のトランザクションログも、古い版を残しておく仕組み。ただし向きが逆になっている。Snowflake は、書き換えで使われなくなった古いマイクロパーティション（変える前のファイル）を、決めた期間（保持期間）残しておく。古い版を残すのは目的そのもので、払うのはストレージの費用。InnoDB は、古い版を「見る人がいる間だけ」残して、purge がすぐに片付ける。古い版を長く残すことになる長いトランザクションは、性能の問題になる。
 
 ## 手を動かして確かめる
 
@@ -240,7 +240,7 @@ DROP DATABASE dba13;
 
 - **履歴リストはクラスター単位**: リーダーはライターと同じストレージを読んでいて、undo もそこにある。ライターの purge は、どのリーダーの読み取りビューが必要とする undo も消せない。だから **リーダーで長いクエリが走っても、履歴リストが伸びる**。ライターに長いトランザクションが見当たらないのに履歴リストが伸びていたら、リーダーも調べる
 - **メトリクス**: CloudWatch の `RollbackSegmentHistoryListLength` で、履歴リストの長さの移り変わりが見られる
-- **リーダーの分離レベル**: リーダーは既定で REPEATABLE READ で、`SET TRANSACTION ISOLATION LEVEL` は無視される。長い集計をリーダーで流すときは、セッションで `aurora_read_replica_read_committed` を ON にすると READ COMMITTED にできる（読み取りビューを文ごとに作り直すので、purge を邪魔しにくくなる）。ただし、ライターでの READ COMMITTED と同じ結果になるとは限らない、とドキュメントに注意がある
+- **リーダーの分離レベル**: リーダーは既定で REPEATABLE READ で、`SET TRANSACTION ISOLATION LEVEL` は無視される。長い集計をリーダーで流すときは、そのリーダーに繋いだセッションで、`SET SESSION aurora_read_replica_read_committed = ON;` を流してから `SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;` で分離レベルを変えると、READ COMMITTED になる（読み取りビューを文ごとに作り直すので、purge を邪魔しにくくなる）。1つ目だけでは REPEATABLE READ のまま。ただし、ライターでの READ COMMITTED と同じ結果になるとは限らない、とドキュメントに注意がある
 - **片付けの反動**: 長いトランザクションが終わると、たまっていた undo を purge が一気に片付ける。その勢いで、リーダーが遅れることがある
 - **アップグレードの前**: 履歴リストが長いと、止めるときの片付けに時間がかかる。メジャーバージョンのアップグレードの前には、履歴リストを小さくしておく
 

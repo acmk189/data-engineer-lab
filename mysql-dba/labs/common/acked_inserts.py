@@ -2,6 +2,8 @@
 
     python /lab/labs/common/acked_inserts.py --host src --table dba12.acked --seconds 60
 
+始めるたびにテーブルを作り直して、1 から入れる。同じテーブルで何回試してもよい（クラッシュで消えた行が
+レプリカに残っていても、作り直しでレプリカのテーブルも消えるので、ぶつからない。22章）。
 途中でサーバーが落ちたら、stopped=理由 を出して終わる。最後の acked= が「コミット済みと返事をもらった最後の番号」になる。
 サーバーを起動し直してから SELECT COUNT(*) と比べると、コミット済みと返したのに消えたものがあるかが分かる。
 """
@@ -22,8 +24,9 @@ args = parser.parse_args()
 schema = args.table.split(".")[0]
 conn = db.connect(args.host)
 db.q1(conn, f"CREATE DATABASE IF NOT EXISTS {schema}")
-db.q1(conn, f"CREATE TABLE IF NOT EXISTS {args.table} (id INT PRIMARY KEY)")
-i = int(db.q1(conn, f"SELECT IFNULL(MAX(id), 0) + 1 FROM {args.table}"))
+db.q1(conn, f"DROP TABLE IF EXISTS {args.table}")
+db.q1(conn, f"CREATE TABLE {args.table} (id INT PRIMARY KEY)")
+i = 1
 
 deadline = time.monotonic() + args.seconds
 try:

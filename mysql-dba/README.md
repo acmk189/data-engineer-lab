@@ -79,7 +79,7 @@ make state      # 実験で変えた設定が残っていないか、レプリ�
 make reset      # 全部消して、初期状態から作り直す
 make down       # 止める（データは残る）
 make verify     # 実験が解説どおりに動くかを、まとめて確かめる（make verify ch=12 で1章だけ）
-make lint       # 章のファイルの形を確かめる
+make lint       # 章のファイルの形と、ホストで動くスクリプトの書き方（macOS でも動くか）を確かめる
 ```
 
 ## Aurora とバージョン
@@ -109,3 +109,4 @@ make lint       # 章のファイルの形を確かめる
 - 道具コンテナ: Ubuntu 26.04（MySQL のクライアント 8.4.13、sysbench 1.0.20、Python 3.14、pymysql 1.2.4、mysql-replication 1.0.17）
 - 42章: Kafka 4.1.1（公式イメージ、KRaft）、Debezium の MySQL コネクタ 3.7.1.Final
 - 2026-11-21 に、`make reset` のあと `make verify` を2回続けて流して、全章の確認が2回とも通ることを確かめた（bg と cdc のプロファイルを使う章も含む）
+- 確かめたのは Linux（x86_64）の Docker の上。Apple Silicon の Mac では、まだ流していない。使うイメージに arm64 版があることと、ホストで動くスクリプトが macOS の bash 3.2 と BSD の `date`・`wc` でも動く書き方になっていること（`make lint`）は確かめてある

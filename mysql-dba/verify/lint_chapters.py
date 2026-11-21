@@ -31,6 +31,11 @@ INLINE_CODE = re.compile(r"`[^`]*`")
 FENCE = re.compile(r"^\s*(```|~~~)\s*([\w-]*)")
 MAKE_CMD = re.compile(r"^\s*(?:\$\s+)?make(?:\s+(.*))?$")
 MAKE_TARGET_DEF = re.compile(r"^([A-Za-z0-9][A-Za-z0-9_-]*)\s*:(?!=)")
+# 測った時間（仕様 §5.7: 時間や速さは環境で変わるので、本文には傾向だけを書く）
+TIME_FIGURE = re.compile(r"[0-9][0-9.,〜~]*\s*(?:ミリ秒|マイクロ秒|秒|ms\b)")
+MEASURED = re.compile(r"かかった|待たされ|止まった|だった")
+SET_BY_CONFIG = re.compile(r"設定|既定|タイムアウト")
+TABLE_SEPARATOR = re.compile(r":?-+:?")
 
 
 class Line:
@@ -118,6 +123,7 @@ class Checker:
         self.check_desumasu()
         self.check_links()
         self.check_make(targets)
+        self.check_measured_time()
         if self.kind() == "chapter":
             self.check_title()
             self.check_chapter()
@@ -143,6 +149,31 @@ class Checker:
                 rel = target.split("#", 1)[0].split("?", 1)[0]
                 if rel and not (self.path.parent / rel).exists():
                     self.err(line.no, "リンク切れ", f"リンク先がない: {target}")
+
+    def check_measured_time(self):
+        why = "測った時間を書かない。どちらが速いか、およそ何倍かを書く（仕様 §5.7。数字は読み手が自分の環境で測る）"
+        # 表: 見出しに「時間」と書いた列には、測った時間を書かない
+        header, cols = True, []
+        for line in self.lines:
+            if line.in_code or not line.text.lstrip().startswith("|"):
+                header = True
+                continue
+            cells = [c.strip() for c in line.text.strip().strip("|").split("|")]
+            if header:
+                cols, header = [i for i, c in enumerate(cells) if "時間" in c], False
+                continue
+            if all(TABLE_SEPARATOR.fullmatch(c) for c in cells if c):
+                continue
+            for i in cols:
+                if i < len(cells) and TIME_FIGURE.search(INLINE_CODE.sub("", cells[i])):
+                    self.err(line.no, "測った時間", "表の「時間」の列に" + why)
+        # 文: 「確かめたとき」に測った時間を書かない（タイムアウトのように、設定で決まる時間は除く）
+        for line in self.lines:
+            if line.in_code or line.text.lstrip().startswith("|"):
+                continue
+            text = INLINE_CODE.sub("", line.text)
+            if "確かめたとき" in text and TIME_FIGURE.search(text) and MEASURED.search(text) and not SET_BY_CONFIG.search(text):
+                self.err(line.no, "測った時間", "確かめたときに" + why)
 
     def check_make(self, targets):
         for line, args in make_commands(self.lines):

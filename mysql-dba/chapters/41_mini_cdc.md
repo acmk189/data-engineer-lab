@@ -192,17 +192,24 @@ SET GLOBAL binlog_row_image = FULL;
 
 ### 実験5: DDL と、主キーのないテーブル
 
-**予想:** 列を足す `ALTER TABLE` は、cdc.py にどう届く？ その後の INSERT には、新しい列が入る？ 主キーのないテーブルを作らせない設定はある？
+**予想:** 列を足す `ALTER TABLE` は、cdc.py にどう届く？ その後の INSERT には、新しい列が入る？ 主キーのないテーブルで、同じ値の行の1つだけを UPDATE すると、MINIMAL の `before` には何が入る？ 主キーのないテーブルを作らせない設定はある？
 
 ```sql
 -- make a で
 ALTER TABLE dba41.t ADD COLUMN extra INT;
 INSERT INTO dba41.t VALUES (20, 20, 'z', 7);
+-- 主キーのないテーブルに、同じ値の行を2つ入れて、1つだけ変える（この接続だけ MINIMAL にする）
+SET SESSION binlog_row_image = MINIMAL;
+CREATE TABLE dba41.nopk (a INT, b CHAR(1));
+INSERT INTO dba41.nopk VALUES (1, 'x'), (1, 'x');
+UPDATE dba41.nopk SET b = 'y' LIMIT 1;
+SET SESSION binlog_row_image = FULL;
+-- 主キーのないテーブルを作らせない設定
 SET SESSION sql_require_primary_key = ON;
-CREATE TABLE dba41.nopk (a INT);
+CREATE TABLE dba41.nopk2 (a INT);
 ```
 
-ここを見る: cdc.py の `op: "ddl"` の行と、その後の INSERT の `after`。最後の `CREATE TABLE` のエラー。
+ここを見る: cdc.py の `op: "ddl"` の行と、その後の INSERT の `after`。`nopk` の UPDATE の `before` と `after`。最後の `CREATE TABLE` のエラー。
 
 <details>
 <summary>何が起きたか</summary>
@@ -213,6 +220,14 @@ CREATE TABLE dba41.nopk (a INT);
 ```
 
 DDL は文のまま届く。`schema` には、その文を流したときの既定のデータベース（`USE` で選んだもの）が入る。上の結果は `USE` をしていない接続で流したので空で、`make a` から流すと `lab` になる。DDL の対象のテーブルと同じとは限らないので、実際のツールは文を読み解いて、どのテーブルの変更かを決めている。その後の INSERT には、新しい列 `extra` が入っている。`binlog_row_metadata=FULL` なので、`Table_map` に新しい定義の列の名前が並んでいる（[21章](21_binlog_events.md)）。
+
+`nopk` の UPDATE は、次のように届く。
+
+```json
+{"after": {"b": "y"}, "before": {"a": 1, "b": "x"}, "gtid": "…", "op": "u", "schema": "dba41", "table": "nopk"}
+```
+
+主キーのないテーブルでは、MINIMAL でも `before` に全部の列が入る。行を見分けるのに使える列がないので、全部の列の値で行を探すしかないから。それでも、同じ値の行が2つあると、どちらを変えたのかは、このイベントからは分からない。入れたときの2つの INSERT のイベントも、中身が全く同じになっている。下流で、`before` の値を条件にして UPDATE を写すと、2行とも変わってしまう。
 
 `sql_require_primary_key` を ON にすると、主キーのないテーブルは作れない（エラー 3750）。CDC で流すテーブルに主キーがないと、下流でどの行を変えればよいかを決められないので、最初から作らせないようにできる。
 

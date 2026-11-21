@@ -12,16 +12,17 @@ expect_eq "$(kv "$T" short_timeout_error)" 1205 "lock_wait_timeout を短くし�
 expect_eq "$(kv "$T" select_done_while_a_open)" 1 "ALTER があきらめれば、原因が開いたままでも後ろの SELECT は進む"
 
 ensure_big
-t0=$(date +%s%N); sql src 'ALTER TABLE lab_big.orders_big ADD COLUMN c_instant INT, ALGORITHM=INSTANT'; ti=$(( ($(date +%s%N) - t0) / 1000000 ))
-t0=$(date +%s%N); sql src 'ALTER TABLE lab_big.orders_big ADD COLUMN c_copy INT, ALGORITHM=COPY'; tc=$(( ($(date +%s%N) - t0) / 1000000 ))
+ti=$(sql_ms src 'ALTER TABLE lab_big.orders_big ADD COLUMN c_instant INT, ALGORITHM=INSTANT')
+tc=$(sql_ms src 'ALTER TABLE lab_big.orders_big ADD COLUMN c_copy INT, ALGORITHM=COPY')
 echo "  参考: INSTANT ${ti}ms / COPY ${tc}ms"
 expect_lt "$ti" 1000 "INSTANT はすぐ終わる"
-expect_gt "$tc" "$(( ti * 5 + 1000 ))" "COPY はテーブルを作り直すので時間がかかる"
+expect_gt "$tc" "$(( ti * 10 ))" "COPY はテーブルを作り直すので、INSTANT の何十倍もかかる"
 expect_eq "$(sql_err src 'ALTER TABLE lab_big.orders_big MODIFY customer_id BIGINT, ALGORITHM=INSTANT')" 1846 "INSTANT でできない変更はエラーになる"
 sql src 'ALTER TABLE lab_big.orders_big DROP COLUMN c_instant, DROP COLUMN c_copy, ALGORITHM=INSTANT'
-t0=$(date +%s%N); e=$(sql_err src 'ALTER TABLE lab_big.orders_big ADD INDEX idx_customer (customer_id), ALGORITHM=INPLACE, LOCK=NONE'); tx=$(( ($(date +%s%N) - t0) / 1000000 ))
+tx=$(sql_ms src 'ALTER TABLE lab_big.orders_big ADD INDEX idx_customer (customer_id), ALGORITHM=INPLACE, LOCK=NONE')
 echo "  参考: INPLACE でインデックスを足すのに ${tx}ms"
-expect_eq "$e" "" "インデックスの追加は INPLACE、LOCK=NONE（書き込みを止めない）でできる"
+expect_match "$tx" '^[0-9]+$' "インデックスの追加は INPLACE、LOCK=NONE（書き込みを止めない）でできる"
+expect_lt "$tx" "$tc" "INPLACE のインデックスの追加は、COPY の列の追加より短い"
 sql src 'ALTER TABLE lab_big.orders_big DROP INDEX idx_customer'
 expect_eq "$(sql src "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = 'lab_big' AND TABLE_NAME = 'orders_big' AND COLUMN_NAME LIKE 'c\\_%'")" 0 "足した列を消して元に戻した"
 

@@ -153,12 +153,14 @@ python /lab/labs/10/pk_compare.py --rows 200000
 <details>
 <summary>何が起きたか</summary>
 
-確かめたときの結果は、次のようになった（時間は環境によって変わるので、傾向を見る）。
+確かめたときの結果は、次のようになった。
 
-| | ページ | 分割の回数 | 時間 |
-|---|---|---|---|
-| 増えていく主キー | 1,700 | 1,683 | 1.3 秒 |
-| ランダムな主キー | 2,919 | 2,520 | 2.1 秒 |
+| | ページ | 分割の回数 |
+|---|---|---|
+| 増えていく主キー | 1,700 | 1,683 |
+| ランダムな主キー | 2,919 | 2,520 |
+
+入れ終わるまでの時間は、ランダムな主キーのほうが長くかかった（確かめたときは1.5倍くらい）。時間は環境によって変わるので、自分の環境で測って比べる。
 
 ランダムな主キーは、同じ行数なのにページが約1.7倍になる。ページが平均して7割くらいしか詰まっていないため。
 
@@ -234,7 +236,7 @@ SELECT COUNT(*) FROM lab_big.orders_big;
 ### 違うところ
 
 - **ページを置く場所**: Aurora では、ページはクラスターボリューム（共有のストレージ）にあって、インスタンスは手元のファイルにページを書かない（[01章](01_overview.md)・[12章](12_redo.md)）。バッファプールにないページを読むときは、ネットワーク越しにストレージから読むことになる（[11章](11_buffer_pool.md)）。ランダムな主キーで書き込む場所が散らばると、その分だけストレージからの読み込みが増える
-- **費用**: Aurora のストレージは、使っている容量で課金される。ページの詰まり方が悪いテーブルは、そのまま費用にも効く。データを消すと課金される容量も減るけれど、すぐではなく、少しずつ戻る。使っている容量は CloudWatch の `VolumeBytesUsed` で見られる
+- **費用**: Aurora のストレージは、使っている容量で課金される。ページの詰まり方が悪いテーブルは、そのまま費用にも効く。テーブルやデータベースを消す（`DROP TABLE`、`TRUNCATE TABLE`、`DROP DATABASE`）と、課金される容量も減る。`DELETE` で行を消しただけでは、空いた場所はそのテーブルの中で使い回されるだけで、容量は減らない。減らしたいときは、`OPTIMIZE TABLE` でテーブルを作り直す（`innodb_file_per_table` が ON のとき）。使っている容量は CloudWatch の `VolumeBytesUsed` で見られる
 
 ### 業務の Aurora で見てみるなら
 
@@ -266,6 +268,7 @@ WHERE t.TABLE_TYPE = 'BASE TABLE' AND c.CONSTRAINT_NAME IS NULL
 出典:
 
 - [Amazon Aurora storage（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Overview.StorageReliability.html)
+- [Managing performance and scaling for Aurora DB clusters（ストレージの容量が減る操作）（AWS）](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Managing.Performance.html)
 
 ## 説明できるか確かめる
 

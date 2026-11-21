@@ -237,7 +237,7 @@ DROP DATABASE IF EXISTS dba21;
 - **形式はクラスターのパラメータグループで決める**: `binlog_format` を OFF（既定）、ROW、STATEMENT、MIXED から選ぶ（[20章](20_binlog_basics.md)）。Aurora の一般的な説明では MIXED を勧めているけれど、binlog を読む AWS の仕組みの多くは ROW を前提にしている
   - AWS DMS で CDC をするには、`binlog_format=ROW` と `binlog_row_image=FULL` が必須。DMS は拡張バイナリログには対応していない
   - Blue/Green デプロイは、ROW を勧めている（レプリケーションの中身がずれる危険を減らすため）
-  - Redshift などへのゼロ ETL 統合は、ROW が必須（拡張バイナリログも必須）
+  - Redshift などへのゼロ ETL 統合は、ROW が必須（拡張バイナリログも必須。要る設定の全体は[40章](40_cdc_mechanics.md)）
 - **非推奨の扱い**: AWS のページでも、`binlog_format` が MySQL 8.0.34 から非推奨になったこと、将来は行ベースだけになる見込みであることが書かれている
 
 有効にするなら ROW を選ぶ。安全でない文でレプリカがずれることがなく、CDC で行の変更を取り出せて、AWS のほかの仕組みとも組み合わせやすい。

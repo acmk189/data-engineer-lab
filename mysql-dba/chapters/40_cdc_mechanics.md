@@ -36,11 +36,12 @@ flowchart LR
 | 設定 | binlog を ON（`log_bin`） | 変更の流れそのもの（[20章](20_binlog_basics.md)） |
 | | `binlog_format=ROW` | 文ではなく、変わった行が要る（[21章](21_binlog_events.md)） |
 | | `binlog_row_image=FULL` | 変える前と後の、全部の列の値が要る（[21章](21_binlog_events.md)） |
-| | GTID を ON | どこまで読んだかを、サーバーをまたいで続けられる（[30章](30_replication.md)） |
+| | GTID を ON | どこまで読んだかを、サーバーをまたいで続けられる（[30章](30_replication.md)）。GTID は必須ではない。なくても、binlog のファイル名と位置で続きから読める（Debezium もどちらでも動く）。この先の章の CDC は GTID を使う |
 | | binlog の保持期間を十分に | CDC のツールが止まっている間に消えると、続きから読めない（[20章](20_binlog_basics.md)） |
 | 権限 | `REPLICATION SLAVE` | binlog を受け取る |
 | | `REPLICATION CLIENT` | `SHOW BINARY LOGS` などで、binlog の状態を見る |
 | | `SELECT` | 最初のスナップショットで、テーブルを読む |
+| | `SHOW DATABASES` | スナップショットのときに、データベースの一覧を見る（Debezium） |
 | | `RELOAD`、`LOCK TABLES` | スナップショットのときに、読み取りのロックをかける |
 
 この環境の `cdc` ユーザーには、この権限を付けてある。
@@ -199,7 +200,7 @@ bash /lab/labs/40/snapshot_check.sh
 
 書き込みを止めたのは、GTID の集まりを記録してスナップショットの視点を作るまでの一瞬だけ。スナップショットの行を読んでいる間も、INSERT は進んでいる。
 
-ただし、長く動いているクエリがあると、`FLUSH TABLES WITH READ LOCK` はそれを待つ。確かめたときは、6秒かかる SELECT の途中で流すと、`FLUSH TABLES WITH READ LOCK` が約5秒待たされて、その後ろに来た INSERT も約4秒止まった。
+ただし、長く動いているクエリがあると、`FLUSH TABLES WITH READ LOCK` はそれを待つ。6秒かかる SELECT の途中で流すと、`FLUSH TABLES WITH READ LOCK` は SELECT が終わるまで待たされて、その後ろに来た INSERT も、SELECT が終わるまで止まった。
 
 </details>
 
@@ -224,7 +225,10 @@ DROP DATABASE IF EXISTS dba40;
 - **binlog は既定で OFF**: クラスターのパラメータグループで `binlog_format` を ROW にして、再起動する（[20章](20_binlog_basics.md)）
 - **保持期間**: `CALL mysql.rds_set_configuration('binlog retention hours', 24);` のように決める（最大 2160時間）。AWS の DMS の説明でも、AWS の管理するデータベースは binlog をできるだけ早く消すので、保持期間を延ばすよう書かれている
 - **AWS DMS の要件**: CDC には `binlog_format=ROW` と `binlog_row_image=FULL` が要る。Aurora MySQL の拡張バイナリログには対応していない
-- **ゼロ ETL 統合**: Redshift などへの連携を AWS が自動でする仕組み。Aurora MySQL では、拡張バイナリログ（`aurora_enhanced_binlog=1`、`binlog_backup=0`、`binlog_replication_globaldb=0`）と `binlog_format=ROW` が要る。スナップショットとその後の変更のつなぎも、AWS の側でやる
+- **ゼロ ETL 統合**: Redshift などへの連携を AWS が自動でする仕組み。スナップショットとその後の変更のつなぎも、AWS の側でやる。Aurora MySQL では、クラスターのパラメータグループに次の値が要る
+  - 拡張バイナリログ: `aurora_enhanced_binlog=1`、`binlog_backup=0`、`binlog_replication_globaldb=0`
+  - 行の形: `binlog_format=ROW`、`binlog_row_image=FULL`、`binlog_row_metadata=FULL`（MINIMAL のままだと、binlog に列の名前が入らない。[41章](41_mini_cdc.md)の実験1）
+  - 使っていないこと: `binlog_transaction_compression` が ON でない。`binlog_row_value_options` が `PARTIAL_JSON` でない
 - **拡張バイナリログのファイルは、バックアップやクローンに入らない**: 復元したクラスターやクローンでは、元のクラスターの binlog の続きは読めない（[20章](20_binlog_basics.md)）
 
 ### 業務の Aurora で見てみるなら

@@ -16,22 +16,40 @@ expect_ge "$(kv "$T.1" redo_fsyncs)" 1800 "1 はコミットのたびに redo �
 expect_le "$(kv "$T.2" redo_fsyncs)" 200 "2 は書くだけで、fsync はおよそ1秒ごと"
 expect_le "$(kv "$T.0" redo_fsyncs)" 200 "0 もおよそ1秒ごと"
 
-# 0 で消えるのは、redo を書く裏方のスレッドがまだ書いていなかった直前の分だけ。
-# 落ちた瞬間に書き終わっていれば消えないこともあるので、3回まで試す
+# 0 で、redo を書く専用のスレッド（innodb_log_writer_threads）を止めると、redo は約1秒ごとにしか OS に渡らない。
+# だから kill -9 で、直前の分がまとめて消える。消える件数は落ちた瞬間によるので、3回まで試して、いちばん多く消えた回を見る
+lost_max=0
 for attempt in 1 2 3; do
   sql src "SET GLOBAL innodb_flush_log_at_trx_commit = 0"
+  sql src "SET GLOBAL innodb_log_writer_threads = OFF"
   crash_during_inserts "dba12.acked_0_$attempt" 3 > "$T.c0"
-  echo "  参考: flush=0（$attempt 回目）で、コミット済みと返った $(kv "$T.c0" acked) 件のうち、再起動後に $(kv "$T.c0" stored) 件が残った"
+  a=$(kv "$T.c0" acked); st=$(kv "$T.c0" stored); lost=$(( ${a:-0} - ${st:-0} ))
+  echo "  参考: flush=0（$attempt 回目）で、コミット済みと返った ${a} 件のうち、${lost} 件が消えた"
   sql src "SET GLOBAL sync_binlog = 0"   # 再起動で設定ファイルの値に戻るので、もう一度設定する
-  [ "$(kv "$T.c0" stored)" -lt "$(kv "$T.c0" acked)" ] 2>/dev/null && break
+  [ "$lost" -gt "$lost_max" ] && lost_max=$lost
+  [ "$lost_max" -ge 20 ] && break
 done
+expect_ge "$lost_max" 20 "0 は kill -9 で、直前にコミット済みと返したものがまとめて消える"
+
+# 同じテーブルでもう一度流しても（読み手が実験2を何回か試すとき）、レプリケーションは止まらない。
+# 消えた行は、レプリカには残っている（binlog には書いてあったため。22章）
+py labs/common/acked_inserts.py --host src --table "dba12.acked_0_$attempt" --seconds 2 > "$T.again" 2>&1
+wait_caught_up 60
+expect_eq "$(sql rep 'SELECT MAX(LAST_ERROR_NUMBER) FROM performance_schema.replication_applier_status_by_worker')" 0 "同じテーブルで試し直しても、レプリカは止まらない"
+expect_eq "$(sql rep "SELECT COUNT(*) FROM dba12.acked_0_$attempt")" "$(sql src "SELECT COUNT(*) FROM dba12.acked_0_$attempt")" "試し直した後は、ソースとレプリカの行の数がそろう"
+
+# 参考: 専用のスレッドが ON（既定）のままだと、すぐに OS に渡すので、消えるのはふつう0〜数件
+sql src "SET GLOBAL innodb_flush_log_at_trx_commit = 0"
+crash_during_inserts "dba12.acked_0_on" 3 > "$T.on"
+a=$(kv "$T.on" acked); st=$(kv "$T.on" stored)
+echo "  参考: flush=0 で専用のスレッドが ON のままなら、コミット済みと返った ${a} 件のうち、$(( ${a:-0} - ${st:-0} )) 件が消えた"
+sql src "SET GLOBAL sync_binlog = 0"
 for v in 1 2; do
   sql src "SET GLOBAL innodb_flush_log_at_trx_commit = $v"
   crash_during_inserts "dba12.acked_$v" 3 > "$T.c$v"
   echo "  参考: flush=$v で、コミット済みと返った $(kv "$T.c$v" acked) 件のうち、再起動後に $(kv "$T.c$v" stored) 件が残った"
   sql src "SET GLOBAL sync_binlog = 0"
 done
-expect_lt "$(kv "$T.c0" stored)" "$(kv "$T.c0" acked)" "0 は kill -9 で、コミット済みと返したものが消えることがある（3回までに起きる）"
 expect_ge "$(kv "$T.c1" stored)" "$(kv "$T.c1" acked)" "1 は消えない"
 expect_ge "$(kv "$T.c2" stored)" "$(kv "$T.c2" acked)" "2 は、プロセスが落ちただけなら消えない"
 

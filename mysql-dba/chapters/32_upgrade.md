@@ -45,7 +45,7 @@ sequenceDiagram
 | なくなった SQL | `SHOW MASTER STATUS` | `SHOW BINARY LOG STATUS` |
 | | `CHANGE MASTER TO`、`START SLAVE` | `CHANGE REPLICATION SOURCE TO`、`START REPLICA` |
 | | `RESET MASTER` | `RESET BINARY LOGS AND GTIDS` |
-| なくなった権限 | `SET_USER_ID` | なし |
+| なくなった権限 | `SET_USER_ID` | `SET_ANY_DEFINER` と `ALLOW_NONEXISTENT_DEFINER` に分かれた（8.2 から） |
 | 既定値（一部） | `innodb_adaptive_hash_index=ON`、`innodb_change_buffering=all`、`innodb_io_capacity=200`、`innodb_log_buffer_size=16MB` | `OFF`、`none`、`10000`、`64MB`。`innodb_flush_method` は `O_DIRECT` になった |
 
 既定値の中には、CPU の数などで決まるようになったものもある（`innodb_buffer_pool_instances` など）。設定ファイルに書いていない変数は、版を上げると黙って新しい既定値になる。今の値に頼っているなら、上げる前に設定ファイルに書いておく。

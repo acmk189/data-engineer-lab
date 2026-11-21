@@ -47,7 +47,16 @@ wait
 expect_match "$(cat "$T.5")" '"op": "ddl"' "DDL も流れてくる"
 expect_match "$(cat "$T.5")" '"extra": 7' "DDL の後の変更には、新しい列が入る"
 
-expect_eq "$(sql_err src 'SET SESSION sql_require_primary_key=ON; CREATE TABLE dba41.nopk (a INT)')" 3750 "主キーのないテーブルは作らせない設定がある"
+# 6. 主キーのないテーブルでは、MINIMAL でも更新前の値に全部の列が入る。同じ値の2行は、CDC から見分けられない
+run_cdc > "$T.6" &
+sleep 2
+sql src "SET SESSION binlog_row_image=MINIMAL; CREATE TABLE dba41.nopk (a INT, b CHAR(1)); INSERT INTO dba41.nopk VALUES (1,'x'),(1,'x'); UPDATE dba41.nopk SET b='y' LIMIT 1"
+wait
+expect_eq "$(tools jq -c 'select(.op=="u" and .table=="nopk") | .before' < "$T.6")" '{"a":1,"b":"x"}' "主キーがないと、MINIMAL でも更新前の値に全部の列が入る"
+expect_eq "$(tools jq -c 'select(.op=="u" and .table=="nopk") | .after' < "$T.6")" '{"b":"y"}' "更新後の値は、変えた列だけ"
+expect_eq "$(tools jq -c 'select(.op=="c" and .table=="nopk") | .after' < "$T.6" | sort -u | grep -c .)" 1 "同じ値の2行は、CDC から見ると区別がつかない"
+
+expect_eq "$(sql_err src 'SET SESSION sql_require_primary_key=ON; CREATE TABLE dba41.nopk2 (a INT)')" 3750 "主キーのないテーブルは作らせない設定がある"
 
 sql src 'SET GLOBAL binlog_row_metadata=MINIMAL; SET GLOBAL binlog_row_image=FULL; DROP DATABASE IF EXISTS dba41'
 wait_caught_up

@@ -94,7 +94,7 @@ GTID の集まり（`gtids`）と、binlog のファイルと位置に加えて�
 | | Debezium | AWS DMS | Aurora のゼロ ETL 統合 |
 |---|---|---|---|
 | 何をする | 変更のイベントを Kafka に流す | データベースから別のデータベースや S3 などへ、データを移して、写し続ける | Aurora から Redshift や SageMaker Lakehouse へ、分析用に写し続ける |
-| binlog への要件 | ROW と FULL。GTID があると、続きから読みやすい | ROW と FULL。拡張バイナリログには対応していない | 拡張バイナリログ、ROW、`binlog_backup=0`、`binlog_replication_globaldb=0` |
+| binlog への要件 | ROW と FULL。GTID があると、続きから読みやすい | ROW と FULL。拡張バイナリログには対応していない | 拡張バイナリログ（`binlog_backup=0`、`binlog_replication_globaldb=0` も）、ROW と FULL、`binlog_row_metadata=FULL`（全体は[40章](40_cdc_mechanics.md)） |
 | 最初のデータ | スナップショット（`snapshot.mode`） | 全部を読み込んでから CDC を始める（full-load-and-cdc） | 最初に全部を読み込んでから、写し続ける（AWS がやる） |
 | どこまで読んだか | Kafka Connect の内部のトピック | タスクの、CDC のリカバリーのチェックポイント | AWS が管理する |
 | 自分で運用するもの | Kafka、Kafka Connect、コネクター | レプリケーションのインスタンスとタスク | 統合の設定 |
@@ -233,7 +233,7 @@ make state
 - **binlog を有効にするところから**: Aurora では binlog が既定で OFF なので、クラスターのパラメータグループで有効にして、再起動する（[20章](20_binlog_basics.md)）
 - **スナップショットのロック**: RDS や Aurora では全体の読み取りのロック（`FLUSH TABLES WITH READ LOCK`）を使えないので、Debezium はテーブルごとのロックに切り替えてスナップショットを取る。そのために `LOCK TABLES` の権限が要る（この環境の `cdc` ユーザーにも付けてある）
 - **AWS DMS**: 移し方の種類に、全部を移す（full-load）、変更だけを写す（cdc）、全部を移してから変更を写し続ける（full-load-and-cdc）がある。CDC には `REPLICATION CLIENT` と `REPLICATION SLAVE` の権限、ROW と FULL が要る。どこまで読んだかは、タスクの CDC のリカバリーのチェックポイントとして残って、そこから再開できる。全部を移している途中でソースが止まると、タスクはエラーにならずに終わるのに、ターゲットがずれていることがある（AWS のドキュメントの注意）
-- **ゼロ ETL 統合**: 送り先は Amazon Redshift か Amazon SageMaker Lakehouse。最初に全部を読み込んだ後、Aurora に書かれてから数秒のうちに写し続ける。Aurora MySQL では、拡張バイナリログが要る
+- **ゼロ ETL 統合**: 送り先は Amazon Redshift か Amazon SageMaker Lakehouse。最初に全部を読み込んだ後、Aurora に書かれてから数秒のうちに写し続ける。Aurora MySQL では、拡張バイナリログと、行の形の設定（ROW、FULL、`binlog_row_metadata=FULL`）が要る（[40章](40_cdc_mechanics.md)）
 
 ### 業務の Aurora で見てみるなら
 

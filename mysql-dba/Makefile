@@ -52,8 +52,10 @@ sh:  ## 道具コンテナのシェルに入る（mysqlbinlog、sysbench、pytho
 verify:  ## 確認スクリプトを流す（実験が解説どおりに動くか）。例: make verify / make verify ch=12
 	bash verify/run.sh $(ch)
 
-lint:  ## 章のファイルの形を確かめる（見出しの順番、です・ます、リンク切れ、make のターゲットなど）
+lint:  ## 章のファイルの形（見出しの順番、です・ます、リンク切れ、make のターゲットなど）と、ホストで動くスクリプトの書き方を確かめる
 	$(DC) exec -T tools python /repo/mysql-dba/verify/lint_chapters.py
+	bash verify/check_host_scripts.sh
+	bash verify/check_chapter_facts.sh
 
 crash:  ## ソースの mysqld を kill -9 で落として、起動し直す。復旧の記録を表示する（12章・22章）
 	$(DC) kill -s KILL src

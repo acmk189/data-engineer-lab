@@ -20,7 +20,7 @@
 | ALTER TABLE | `SHARED_UPGRADABLE` を取ってから、定義を切り替える瞬間に `EXCLUSIVE` |
 | DROP TABLE | `EXCLUSIVE` |
 
-`SHARED_*` 同士はぶつからないので、ふだんの読み書きは MDL で待つことはない。ぶつかるのは `EXCLUSIVE` で、これはほかのどの MDL とも一緒には持てない。
+`SHARED_READ` と `SHARED_WRITE` は互いにぶつからないし、ALTER の `SHARED_UPGRADABLE` ともぶつからない。だから、ふだんの読み書きは MDL で待つことはない。ただし `SHARED_` の付くものでも、ぶつかる組み合わせがある。`SHARED_UPGRADABLE` 同士はぶつかるので、同じテーブルの ALTER は1つずつ進む。`LOCK TABLES … READ` が取る `SHARED_READ_ONLY` と、COPY の ALTER がデータを写している間に取る `SHARED_NO_WRITE` は、書き込みの `SHARED_WRITE` とぶつかる（読むのは止めない）。`EXCLUSIVE` は、ほかのどの MDL とも一緒には持てない。
 
 大事なのは、MDL を **トランザクションが終わるまで持ち続ける** こと。SELECT が終わっても、そのトランザクションがコミットかロールバックをするまで、`SHARED_READ` を手放さない。MDL はサーバー層の仕組みで（[01章](01_overview.md)）、InnoDB の行ロックとは別物。`performance_schema.metadata_locks` で見られる。
 
@@ -69,7 +69,7 @@ ALTER TABLE は、やることによって、かかる時間と、その間に�
 | `INPLACE` | テーブルの中で作業する。テーブルを作り直すものと、作り直さないもの（インデックスの追加など）がある | データの量に比例 | 多くは止めない（`LOCK=NONE`） | セカンダリインデックスの追加 |
 | `COPY` | 新しい定義のテーブルを作って、全部の行をコピーする | データの量に比例（いちばん遅い） | 止める | 列の型の変更 |
 
-確かめたときは、約120万行のテーブルで、`INSTANT` の列の追加が約0.2秒、`COPY` の列の追加が約4.3秒、`INPLACE` のインデックスの追加が約1.4秒だった（実験3）。
+約120万行のテーブルで試すと、`INSTANT` の列の追加は行の数によらずすぐに終わって、`COPY` の列の追加は、その何十倍もかかった。`INPLACE` のインデックスの追加は、`COPY` より短かった（実験3）。
 
 使うときの注意が3つある。
 
@@ -229,11 +229,11 @@ ALTER TABLE lab_big.orders_big DROP INDEX idx_customer;
 
 確かめたときは、次のようになった（時間は環境によって変わる）。
 
-| 操作 | 時間 |
+| 操作 | かかり方 |
 |---|---|
-| `ADD COLUMN … ALGORITHM=INSTANT` | 約0.2秒 |
-| `ADD COLUMN … ALGORITHM=COPY` | 約4.3秒 |
-| `ADD INDEX … ALGORITHM=INPLACE, LOCK=NONE` | 約1.4秒 |
+| `ADD COLUMN … ALGORITHM=INSTANT` | 行の数によらず、すぐ終わる |
+| `ADD COLUMN … ALGORITHM=COPY` | いちばん長い（`INSTANT` の何十倍も） |
+| `ADD INDEX … ALGORITHM=INPLACE, LOCK=NONE` | `COPY` より短い |
 
 同じ「列を1つ足す」でも、`INSTANT` は定義を書き換えるだけで、行の数に関係なく一瞬で終わる。`COPY` は120万行を全部コピーするので、行の数に比例して時間がかかる。
 

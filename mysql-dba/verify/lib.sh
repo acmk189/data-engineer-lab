@@ -26,6 +26,13 @@ sql() { local host=$1; shift; dc exec -T -e MYSQL_PWD=root tools mysql -h "$host
 # 結果が EXPECTED と一致すれば成功（wait_for と組み合わせて使う）
 sql_is() { [ "$(sql "$1" "$2" 2>/dev/null)" = "$3" ]; }
 
+# SQL を流して、かかったミリ秒を出す（失敗したら何も出さない）。時間は道具コンテナの中で測る。
+# docker compose exec の往復を含めないためと、macOS の date が %N（ナノ秒）を知らないため
+sql_ms() {
+  local host=$1; shift
+  dc exec -T -e MYSQL_PWD=root tools bash -c 's=$(date +%s%N); mysql -h "$1" -uroot -N -B -e "$2" >/dev/null || exit 1; echo $(( ($(date +%s%N) - s) / 1000000 ))' _ "$host" "$*"
+}
+
 # エラーになったときのエラー番号だけを出す（成功したら空文字）
 sql_err() {
   local host=$1; shift
